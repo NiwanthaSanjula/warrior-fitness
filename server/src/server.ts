@@ -1,32 +1,25 @@
 
-import "dotenv/config";
-import express from "express";
-import cors from "cors";
+import { app } from "./app.js";
+import { connectDatabase } from "./config/db.js";
+import { env } from "./config/env.js";
 
-const app = express();
+async function startServer(): Promise<void> {
+  try {
+    await connectDatabase();
 
-const PORT = Number(process.env.PORT) || 5000;
+    app.listen(env.PORT, "127.0.0.1", () => {
+      console.log(
+        `API running at http://localhost:${env.PORT}✅`
+      );
 
-// Middleware
-app.use(express.json());
+      console.log(
+        `Environment: ${env.NODE_ENV}`
+      );
+    });
+  } catch (error) {
+    console.error("Server startup failed:", error);
+    process.exit(1);
+  }
+}
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-  })
-);
-
-// Health check endpoint
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    status: "ok",
-    message: "Warrior Fitness API is running",
-  });
-});
-
-// Start server
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(
-    `Server running at http://localhost:${PORT}`
-  );
-});
+void startServer();
