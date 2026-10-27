@@ -7,6 +7,9 @@ import { env } from "./config/env.js";
 import { healthRouter } from "./modules/health/health.routes.js";
 import { notFound } from "./middlewares/notFound.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+import cookieParser from "cookie-parser";
+import { authRouter } from "./modules/auth/auth.routes.js";
+import { staffRouter } from "./modules/staff/staff.routes.js";
 
 const app = express();
 
@@ -26,8 +29,16 @@ app.use(
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// API routes
+app.use(cookieParser());
+
+// Public health endpoint
 app.use("/api/health", healthRouter);
+
+// Authentication endpoints
+app.use("/api/auth", authRouter);
+
+// Protected admin staff management
+app.use("/api/staff", staffRouter);
 
 // Error handling (must come after routes)
 app.use(notFound);
