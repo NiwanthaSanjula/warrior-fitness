@@ -6,6 +6,7 @@ import type {
   MemberListParams,
   MemberListResponse,
   MemberResponse,
+  UpdateMemberPayload,
 } from "../types/member";
 
 export const membersApi = {
@@ -33,6 +34,45 @@ export const membersApi = {
     const response = await api.post<MemberResponse>(
       "/members",
       data
+    );
+
+    return response.data;
+  },
+
+  // GET /api/members/:id
+  async getMemberById(
+    id: string,
+    signal?: AbortSignal
+  ): Promise<MemberResponse> {
+    const response = await api.get<MemberResponse>(
+      `/members/${encodeURIComponent(id)}`,
+      { signal }
+    );
+
+    return response.data;
+  },
+
+  // PATCH /api/members/:id
+  async updateMember(
+    id: string,
+    data: UpdateMemberPayload
+  ): Promise<MemberResponse> {
+    const response = await api.patch<MemberResponse>(
+      `/members/${encodeURIComponent(id)}`,
+      data
+    );
+
+    return response.data;
+  },
+
+  // PATCH /api/members/:id/status
+  async updateMemberStatus(
+    id: string,
+    isActive: boolean
+  ): Promise<MemberResponse> {
+    const response = await api.patch<MemberResponse>(
+      `/members/${encodeURIComponent(id)}/status`,
+      { isActive }
     );
 
     return response.data;

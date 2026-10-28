@@ -2,6 +2,7 @@
 import { UserRound } from "lucide-react";
 
 import type { Member } from "../../types/member";
+import { Link } from "react-router";
 
 interface MembersTableProps {
   members: Member[];
@@ -65,6 +66,14 @@ export default function MembersTable({
             >
               Profile Status
             </th>
+
+            <th
+              scope="col"
+              className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-400"
+            >
+              Actions
+            </th>
+
           </tr>
         </thead>
 
@@ -137,6 +146,15 @@ export default function MembersTable({
                     ? "Active"
                     : "Inactive"}
                 </span>
+              </td>
+              
+              <td className="px-6 py-4">
+                <Link
+                  to={`/members/${member.id}`}
+                  className="inline-flex items-center rounded-lg border border-orange-500/30 px-4 py-2 text-xs font-bold text-gym-orange transition hover:bg-orange-500/10"
+                >
+                  View Profile
+                </Link>
               </td>
             </tr>
           ))}

@@ -170,6 +170,13 @@ export default function AddMemberPage() {
             </button>
 
             <Link
+              to={`/members/${createdMember.id}`}
+              className="rounded-xl border border-orange-500/30 px-6 py-3 font-bold text-gym-orange hover:bg-orange-500/10"
+            >
+              View Member Profile
+            </Link>
+
+            <Link
               to="/members"
               className="rounded-xl border border-white/10 px-6 py-3 font-bold text-zinc-300 hover:bg-white/5"
             >

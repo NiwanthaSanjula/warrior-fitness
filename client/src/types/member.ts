@@ -56,9 +56,17 @@ export interface CreateMemberPayload {
   address?: string;
   emergencyContact?: EmergencyContact;
 }
-
 export interface MemberResponse {
   success: boolean;
   message: string;
   data: Member;
 }
+export interface UpdateMemberPayload {
+  fullName: string;
+  phone: string;
+  gender: MemberGender | null;
+  dateOfBirth: string | null;
+  address: string | null;
+  emergencyContact: EmergencyContact | null;
+}
+

@@ -170,7 +170,8 @@ export default function MembersPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/members/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-extrabold text-white transition hover:bg-orange-600"
+            className="inline-flex items-center
+             gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-extrabold text-white transition hover:bg-orange-600"
           >
             <Plus size={18} />
             Add New Member
