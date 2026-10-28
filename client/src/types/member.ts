@@ -48,3 +48,17 @@ export interface MemberListParams {
   q: string;
   status: MemberStatusFilter;
 }
+export interface CreateMemberPayload {
+  fullName: string;
+  phone: string;
+  gender?: MemberGender;
+  dateOfBirth?: string;
+  address?: string;
+  emergencyContact?: EmergencyContact;
+}
+
+export interface MemberResponse {
+  success: boolean;
+  message: string;
+  data: Member;
+}

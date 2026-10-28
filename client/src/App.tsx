@@ -16,6 +16,7 @@ import {
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import MembersPage from "./pages/MembersPage";
+import AddMemberPage from "./pages/AddMemberPage";
 
 function ModulePlaceholder({
   title,
@@ -58,6 +59,11 @@ export default function App() {
           <Route
             path="/members"
             element={<MembersPage />}
+          />
+
+          <Route
+            path="/members/new"
+            element={<AddMemberPage />}
           />
 
           <Route 
