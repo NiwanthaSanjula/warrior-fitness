@@ -11,6 +11,12 @@ import {
   getPlans,
 } from "./plan.controller.js";
 
+import {
+  getPlanById,
+  updatePlan,
+  updatePlanStatus,
+} from "./plan.management.controller.js";
+
 export const planRouter = Router();
 
 // Only authenticated gym staff can
@@ -23,9 +29,24 @@ planRouter.use(
 // Both roles can retrieve permitted plans.
 planRouter.get("/", getPlans);
 
+planRouter.get("/:id", getPlanById);
+
 // Only admins can create membership plans.
 planRouter.post(
   "/",
   requireRole("ADMIN"),
   createPlan
+);
+// Admin only: edit plan details.
+planRouter.patch(
+  "/:id",
+  requireRole("ADMIN"),
+  updatePlan
+);
+
+// Admin only: change plan availability.
+planRouter.patch(
+  "/:id/status",
+  requireRole("ADMIN"),
+  updatePlanStatus
 );
