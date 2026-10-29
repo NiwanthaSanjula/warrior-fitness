@@ -11,6 +11,7 @@ import {
   RefreshCw,
   ShieldAlert,
   UserRound,
+  CalendarCheck
 } from "lucide-react";
 
 import { membersApi } from "../api/members.api";
@@ -267,6 +268,15 @@ export default function MemberProfilePage() {
               <Pencil size={17} />
               Edit Member
             </Link>
+
+            <Link
+              to={`/members/${member.id}/membership`}
+              className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 px-5 py-3 text-sm font-bold text-gym-orange transition hover:bg-orange-500/10"
+            >
+              <CalendarCheck size={18} />
+              Manage Membership
+            </Link>
+
 
             <button
               type="button"
