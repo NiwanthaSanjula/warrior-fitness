@@ -11,6 +11,11 @@ import {
   getMemberMemberships,
 } from "./membership.controller.js";
 
+import {
+  renewMembership,
+  getMembershipSummary,
+} from "./membership.renewal.controller.js";
+
 export const membershipRouter = Router();
 
 membershipRouter.use(
@@ -24,7 +29,20 @@ membershipRouter.post(
   createEnrollment
 );
 
-// Read membership records for a given member.
+// Renew an existing membership.
+membershipRouter.post(
+  "/renew",
+  renewMembership
+);
+
+// Current membership, upcoming renewal,
+// latest period and overall status.
+membershipRouter.get(
+  "/member/:memberId/summary",
+  getMembershipSummary
+);
+
+// Complete membership history.
 membershipRouter.get(
   "/member/:memberId",
   getMemberMemberships

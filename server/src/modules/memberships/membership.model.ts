@@ -43,6 +43,8 @@ export interface IMembership {
 
   enrolledBy: Types.ObjectId;
 
+  renewalRequestId?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -123,6 +125,12 @@ const membershipSchema = new Schema<IMembership>(
       required: true,
       immutable: true,
     },
+
+    renewalRequestId: {
+      type: String,
+      immutable: true,
+    },
+
   },
   {
     timestamps: true,
@@ -134,6 +142,37 @@ membershipSchema.index({
   member: 1,
   startDate: -1,
 });
+
+/**
+ * One membership period can start on a given
+ * date per member.
+ *
+ * This prevents simultaneous renewal requests
+ * from creating duplicate periods when both
+ * calculate the same next start date.
+ */
+membershipSchema.index(
+  {
+    member: 1,
+    startDate: 1,
+  },
+  {
+    unique: true,
+    name: "unique_member_membership_start",
+  }
+);
+
+membershipSchema.index(
+  { renewalRequestId: 1 },
+  {
+    unique: true,
+    name: "unique_renewal_request",
+    partialFilterExpression: {
+      renewalRequestId: { $type: "string" },
+    },
+  }
+);
+
 
 membershipSchema.index({
   endDateExclusive: 1,
