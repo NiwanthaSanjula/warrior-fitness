@@ -2,8 +2,15 @@
 import { useEffect, useState } from "react";
 
 import {
+  Link,
+  useLocation,
+} from "react-router";
+
+import {
   AlertCircle,
+  CheckCircle2,
   CreditCard,
+  Plus,
   RefreshCw,
   Search,
   SearchX,
@@ -14,7 +21,6 @@ import { plansApi } from "../api/plans.api";
 import { getApiErrorMessage } from "../api/api";
 
 import { useAuth } from "../auth/auth-context";
-
 import PlanCard from "../components/plans/PlanCard";
 
 import type {
@@ -36,7 +42,7 @@ function PlansSkeleton() {
   return (
     <div
       role="status"
-      aria-label="Loading membership plans"
+      aria-label="Loading plans"
       className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
     >
       {Array.from({ length: 3 }).map((_, index) => (
@@ -45,12 +51,9 @@ function PlansSkeleton() {
           className="h-85 animate-pulse rounded-2xl border border-white/10 bg-gym-card p-6"
         >
           <div className="h-12 w-12 rounded-xl bg-white/10" />
-
           <div className="mt-8 h-6 w-2/3 rounded bg-white/10" />
-
-          <div className="mt-5 h-9 w-1/2 rounded bg-white/10" />
-
-          <div className="mt-7 h-16 rounded-xl bg-white/5" />
+          <div className="mt-6 h-10 w-1/2 rounded bg-white/10" />
+          <div className="mt-8 h-16 rounded bg-white/5" />
         </div>
       ))}
     </div>
@@ -59,6 +62,7 @@ function PlansSkeleton() {
 
 export default function PlansPage() {
   const { staff } = useAuth();
+  const location = useLocation();
 
   const isAdmin = staff?.role === "ADMIN";
 
@@ -76,35 +80,44 @@ export default function PlansPage() {
   const [loadError, setLoadError] =
     useState<LoadError | null>(null);
 
-  // Admins can request the complete catalogue.
-  // Receptionists can request active plans only.
+  const [actionError, setActionError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
+
+  const [busyPlanId, setBusyPlanId] =
+    useState<string | null>(null);
+
+  // Form page sends a success message using
+  // React Router navigation state.
+  const navigationNotice = (
+    location.state as { notice?: string } | null
+  )?.notice;
+
   const apiStatus = isAdmin ? "all" : "active";
 
-  // Identify the current request without having
-  // to synchronously reset state in an effect.
   const requestKey =
     `${apiStatus}:${refreshVersion}`;
 
+  // Load plans from the backend.
   useEffect(() => {
     const controller = new AbortController();
 
-    plansApi
+    void plansApi
       .getPlans(apiStatus, controller.signal)
       .then((response) => {
-        if (!controller.signal.aborted) {
-          setLoaded({
-            key: requestKey,
-            plans: response.data,
-          });
-        }
+        if (controller.signal.aborted) return;
+
+        setLoaded({
+          key: requestKey,
+          plans: response.data,
+        });
       })
       .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
-          setLoadError({
-            key: requestKey,
-            message: getApiErrorMessage(error),
-          });
-        }
+        if (controller.signal.aborted) return;
+
+        setLoadError({
+          key: requestKey,
+          message: getApiErrorMessage(error),
+        });
       });
 
     return () => controller.abort();
@@ -124,8 +137,6 @@ export default function PlansPage() {
 
   const normalizedSearch = search.trim().toLowerCase();
 
-  // Filtering is local because a gym typically
-  // has a small membership plan catalogue.
   const visiblePlans = (plans ?? []).filter((plan) => {
     const matchesSearch =
       plan.name.toLowerCase().includes(normalizedSearch) ||
@@ -155,10 +166,49 @@ export default function PlansPage() {
     setStatus("all");
   }
 
+  // Admin activates or deactivates a plan.
+  async function handleToggleStatus(
+    plan: MembershipPlan
+  ) {
+    if (!isAdmin || busyPlanId !== null) return;
+
+    const nextStatus = !plan.isActive;
+
+    const confirmed = window.confirm(
+      nextStatus
+        ? `Activate "${plan.name}"? It will be available for new enrollments.`
+        : `Deactivate "${plan.name}"? It will no longer be available for new enrollments.`
+    );
+
+    if (!confirmed) return;
+
+    setBusyPlanId(plan.id);
+    setActionError("");
+    setActionNotice("");
+
+    try {
+      const response =
+        await plansApi.updatePlanStatus(
+          plan.id,
+          nextStatus
+        );
+
+      setActionNotice(
+        response.message ||
+          "Membership plan status updated successfully."
+      );
+
+      refreshPlans();
+    } catch (error) {
+      setActionError(getApiErrorMessage(error));
+    } finally {
+      setBusyPlanId(null);
+    }
+  }
+
   return (
     <div className="space-y-7">
-
-      {/* Page heading */}
+      {/* Heading */}
       <section className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="mb-2 text-xs font-black uppercase tracking-[0.25em] text-gym-orange">
@@ -173,24 +223,58 @@ export default function PlansPage() {
           </h1>
 
           <p className="mt-3 text-sm text-gym-muted">
-            Explore membership packages, durations,
-            prices and availability.
+            Manage membership packages, duration,
+            pricing and availability.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={refreshPlans}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-gym-card px-5 py-3 text-sm font-bold text-zinc-300 transition hover:border-orange-500/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <RefreshCw
-            size={18}
-            className={loading ? "animate-spin" : ""}
-          />
-          Refresh
-        </button>
+        <div className="flex flex-wrap gap-3">
+          {isAdmin && (
+            <Link
+              to="/plans/new"
+              className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
+            >
+              <Plus size={18} />
+              Create Plan
+            </Link>
+          )}
+
+          <button
+            type="button"
+            onClick={refreshPlans}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-gym-card px-5 py-3 text-sm font-bold text-zinc-300 transition hover:border-orange-500/30 hover:text-white disabled:opacity-50"
+          >
+            <RefreshCw
+              size={18}
+              className={loading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        </div>
       </section>
+
+      {/* Success messages */}
+      {(navigationNotice || actionNotice) && (
+        <div
+          role="status"
+          className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-400"
+        >
+          <CheckCircle2 size={19} />
+
+          {actionNotice || navigationNotice}
+        </div>
+      )}
+
+      {/* Status update error */}
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Summary */}
       <section className="grid gap-4 sm:grid-cols-2">
@@ -209,7 +293,9 @@ export default function PlansPage() {
               </p>
 
               <p className="mt-1 text-3xl font-black text-white">
-                {loading || error ? "—" : plans?.length}
+                {loading || error
+                  ? "—"
+                  : plans?.length}
               </p>
             </div>
           </div>
@@ -226,18 +312,20 @@ export default function PlansPage() {
 
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-gym-muted">
-                Available Plans
+                Active Plans
               </p>
 
               <p className="mt-1 text-3xl font-black text-white">
-                {loading || error ? "—" : activeCount}
+                {loading || error
+                  ? "—"
+                  : activeCount}
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Filters */}
+      {/* Search and filtering */}
       <section className="rounded-2xl border border-white/10 bg-gym-card p-5 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -246,12 +334,11 @@ export default function PlansPage() {
             </h2>
 
             <p className="mt-1 text-xs text-gym-muted">
-              Search plans by name, code or description.
+              Search by plan name, code or description.
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            {/* Search */}
             <div className="relative sm:w-72">
               <label
                 htmlFor="plan-search"
@@ -273,18 +360,17 @@ export default function PlansPage() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                className="w-full rounded-xl border border-white/10 bg-gym-bg py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-gym-orange"
+                className="w-full rounded-xl border border-white/10 bg-gym-bg py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-gym-orange"
               />
             </div>
 
-            {/* Admin-only filter */}
             {isAdmin && (
               <div>
                 <label
                   htmlFor="plan-status"
                   className="sr-only"
                 >
-                  Filter membership plans
+                  Filter plans by status
                 </label>
 
                 <select
@@ -307,17 +393,14 @@ export default function PlansPage() {
         </div>
 
         {!loading && !error && (
-          <p
-            className="mt-5 text-xs text-gym-muted"
-            aria-live="polite"
-          >
+          <p className="mt-5 text-xs text-gym-muted">
             Showing {visiblePlans.length} of{" "}
             {plans?.length ?? 0} plans
           </p>
         )}
       </section>
 
-      {/* Results */}
+      {/* Plan results */}
       {loading ? (
         <PlansSkeleton />
       ) : error ? (
@@ -327,7 +410,7 @@ export default function PlansPage() {
             className="mx-auto text-red-400"
           />
 
-          <h2 className="mt-5 text-lg font-bold text-white">
+          <h2 className="mt-5 text-lg font-bold">
             Unable to load membership plans
           </h2>
 
@@ -338,7 +421,7 @@ export default function PlansPage() {
           <button
             type="button"
             onClick={refreshPlans}
-            className="mt-6 rounded-xl bg-gym-orange px-6 py-3 text-sm font-bold text-white hover:bg-orange-600"
+            className="mt-6 rounded-xl bg-gym-orange px-6 py-3 text-sm font-bold"
           >
             Try Again
           </button>
@@ -350,13 +433,13 @@ export default function PlansPage() {
             className="mx-auto text-zinc-500"
           />
 
-          <h2 className="mt-5 text-lg font-bold text-white">
+          <h2 className="mt-5 text-lg font-bold">
             No membership plans found
           </h2>
 
           <p className="mt-2 text-sm text-zinc-400">
             {search || status !== "all"
-              ? "No plans match your current filters."
+              ? "No plans match the selected filters."
               : "No membership plans are available yet."}
           </p>
 
@@ -364,7 +447,7 @@ export default function PlansPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 text-sm font-bold text-gym-orange hover:text-orange-300"
+              className="mt-5 text-sm font-bold text-gym-orange"
             >
               Clear Filters
             </button>
@@ -376,17 +459,21 @@ export default function PlansPage() {
             <PlanCard
               key={plan.id}
               plan={plan}
+              isAdmin={isAdmin}
+              isUpdating={busyPlanId === plan.id}
+              actionsDisabled={busyPlanId !== null}
+              onToggleStatus={handleToggleStatus}
             />
           ))}
         </section>
       )}
 
-      {/* Informational footer */}
+      {/* Footer */}
       {!loading && !error && (
         <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-5 text-sm text-orange-200">
           {isAdmin
-            ? "Administrators can view the complete plan catalogue. Creation, editing and availability controls will be added in the next step."
-            : "Only currently available membership plans are shown. Contact an administrator for changes to plan pricing or availability."}
+            ? "Plan changes affect the catalogue for future enrollments. Historical membership purchases will retain their agreed terms once enrollment is implemented."
+            : "Only active membership plans are displayed. An administrator manages plan pricing and availability."}
         </div>
       )}
     </div>

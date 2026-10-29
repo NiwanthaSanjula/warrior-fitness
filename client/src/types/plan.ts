@@ -30,3 +30,20 @@ export interface PlansListResponse {
   data: MembershipPlan[];
   total: number;
 }
+export interface CreatePlanPayload {
+  code: string;
+  name: string;
+  description: string;
+  durationUnit: PlanDurationUnit;
+  durationCount: number;
+  priceLkr: number;
+}
+
+export type UpdatePlanPayload =
+  Omit<CreatePlanPayload, "code">;
+
+export interface PlanResponse {
+  success: boolean;
+  message?: string;
+  data: MembershipPlan;
+}

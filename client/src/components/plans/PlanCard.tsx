@@ -1,8 +1,12 @@
 
+import { Link } from "react-router";
+
 import {
   CalendarDays,
   Clock3,
   Dumbbell,
+  Pencil,
+  Power,
 } from "lucide-react";
 
 import type {
@@ -11,11 +15,18 @@ import type {
 
 interface PlanCardProps {
   plan: MembershipPlan;
+  isAdmin?: boolean;
+  isUpdating?: boolean;
+  actionsDisabled?: boolean;
+  onToggleStatus?: (plan: MembershipPlan) => void;
 }
 
-const priceFormatter = new Intl.NumberFormat("en-LK", {
-  maximumFractionDigits: 0,
-});
+const priceFormatter = new Intl.NumberFormat(
+  "en-LK",
+  {
+    maximumFractionDigits: 0,
+  }
+);
 
 function formatDuration(
   count: number,
@@ -27,21 +38,26 @@ function formatDuration(
     }`;
   }
 
-  return `${count} ${count === 1 ? "day" : "days"}`;
+  return `${count} ${
+    count === 1 ? "day" : "days"
+  }`;
 }
 
 export default function PlanCard({
   plan,
+  isAdmin = false,
+  isUpdating = false,
+  actionsDisabled = false,
+  onToggleStatus,
 }: PlanCardProps) {
   return (
     <article
       className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-gym-card transition-colors ${
         plan.isActive
           ? "border-white/10 hover:border-orange-500/40"
-          : "border-white/5 opacity-75"
+          : "border-white/5 opacity-80"
       }`}
     >
-      {/* Top accent line */}
       <div
         className={`h-1 w-full ${
           plan.isActive
@@ -51,8 +67,7 @@ export default function PlanCard({
       />
 
       <div className="flex flex-1 flex-col p-6">
-
-        {/* Plan title and status */}
+        {/* Plan status */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10">
             <Dumbbell
@@ -72,6 +87,7 @@ export default function PlanCard({
           </span>
         </div>
 
+        {/* Plan details */}
         <h3 className="mt-5 text-xl font-black text-white">
           {plan.name}
         </h3>
@@ -80,7 +96,6 @@ export default function PlanCard({
           {plan.code}
         </p>
 
-        {/* Price */}
         <div className="mt-7">
           <p className="text-xs font-bold uppercase tracking-wider text-gym-muted">
             Plan Price
@@ -125,20 +140,51 @@ export default function PlanCard({
           </div>
         </div>
 
-        {/* Description */}
         <p className="mt-5 flex-1 whitespace-pre-line text-sm leading-6 text-zinc-400">
           {plan.description ||
-            "No description has been added to this plan."}
+            "No description added to this plan."}
         </p>
 
-        {/* Footer */}
+        {/* Availability */}
         <div className="mt-6 border-t border-white/10 pt-4">
           <p className="text-xs text-gym-muted">
             {plan.isActive
-              ? "Available for membership enrollment"
+              ? "Available for new enrollments"
               : "Unavailable for new enrollments"}
           </p>
         </div>
+
+        {/* Admin-only actions */}
+        {isAdmin && (
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <Link
+              to={`/plans/${plan.id}/edit`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-xs font-bold text-zinc-200 transition hover:border-gym-orange hover:text-white"
+            >
+              <Pencil size={16} />
+              Edit Plan
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => onToggleStatus?.(plan)}
+              disabled={actionsDisabled}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                plan.isActive
+                  ? "border-red-500/30 text-red-400 hover:bg-red-500/10"
+                  : "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+              }`}
+            >
+              <Power size={16} />
+
+              {isUpdating
+                ? "Updating..."
+                : plan.isActive
+                  ? "Deactivate"
+                  : "Activate"}
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
