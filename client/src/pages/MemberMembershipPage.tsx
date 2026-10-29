@@ -305,6 +305,7 @@ export default function MemberMembershipPage() {
           "The renewal result could not be confirmed. Retry this same renewal without changing the selected plan or leaving the page."
         );
       } else {
+        
         setPendingRenewal(null);
         setUncertainRenewal(false);
         setActionError(getApiErrorMessage(error));

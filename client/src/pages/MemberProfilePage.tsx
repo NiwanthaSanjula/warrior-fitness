@@ -18,7 +18,11 @@ import { membersApi } from "../api/members.api";
 import { getApiErrorMessage } from "../api/api";
 import { useAuth } from "../auth/auth-context";
 
+import MembershipOverview from "../components/members/MembershipOverview";
+
+
 import type { Member } from "../types/member";
+
 
 function formatDate(
   value: string | null,
@@ -338,6 +342,12 @@ export default function MemberProfilePage() {
           membership validity.
         </p>
       </section>
+      
+      {/* Membership overview */}
+      <MembershipOverview
+        memberId={member.id}
+        refreshVersion={refreshKey}
+      />
 
       {/* Personal information */}
       <ProfileSection title="Personal Information">
