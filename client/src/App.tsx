@@ -21,6 +21,7 @@ import MemberProfilePage from "./pages/MemberProfilePage";
 import EditMemberPage from "./pages/EditMemberPage";
 import PlansPage from "./pages/PlansPage";
 import PlanFormPage from "./pages/PlanFormPage";
+import MemberMembershipPage from "./pages/MemberMembershipPage";
 
 function ModulePlaceholder({
   title,
@@ -78,6 +79,11 @@ export default function App() {
           <Route
             path="/members/:id/edit"
             element={<EditMemberPage />}
+          />
+          
+          <Route
+            path="/members/:id/membership"
+            element={<MemberMembershipPage />}
           />
 
           <Route

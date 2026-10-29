@@ -11,13 +11,18 @@ import {
   RefreshCw,
   ShieldAlert,
   UserRound,
+  CalendarCheck
 } from "lucide-react";
 
 import { membersApi } from "../api/members.api";
 import { getApiErrorMessage } from "../api/api";
 import { useAuth } from "../auth/auth-context";
 
+import MembershipOverview from "../components/members/MembershipOverview";
+
+
 import type { Member } from "../types/member";
+
 
 function formatDate(
   value: string | null,
@@ -268,6 +273,15 @@ export default function MemberProfilePage() {
               Edit Member
             </Link>
 
+            <Link
+              to={`/members/${member.id}/membership`}
+              className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 px-5 py-3 text-sm font-bold text-gym-orange transition hover:bg-orange-500/10"
+            >
+              <CalendarCheck size={18} />
+              Manage Membership
+            </Link>
+
+
             <button
               type="button"
               onClick={() =>
@@ -328,6 +342,12 @@ export default function MemberProfilePage() {
           membership validity.
         </p>
       </section>
+      
+      {/* Membership overview */}
+      <MembershipOverview
+        memberId={member.id}
+        refreshVersion={refreshKey}
+      />
 
       {/* Personal information */}
       <ProfileSection title="Personal Information">
