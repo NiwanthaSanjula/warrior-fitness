@@ -11,6 +11,7 @@ import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { staffRouter } from "./modules/staff/staff.routes.js";
 import { memberRouter } from "./modules/members/member.routes.js";
+import { planRouter } from "./modules/membership-plans/plan.routes.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/staff", staffRouter);
 
 app.use("/api/members", memberRouter);
+app.use("/api/plans", planRouter);
 
 // Error handling (must come after routes)
 app.use(notFound);

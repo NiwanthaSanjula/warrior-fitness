@@ -19,6 +19,8 @@ import MembersPage from "./pages/MembersPage";
 import AddMemberPage from "./pages/AddMemberPage";
 import MemberProfilePage from "./pages/MemberProfilePage";
 import EditMemberPage from "./pages/EditMemberPage";
+import PlansPage from "./pages/PlansPage";
+import PlanFormPage from "./pages/PlanFormPage";
 
 function ModulePlaceholder({
   title,
@@ -78,11 +80,9 @@ export default function App() {
             element={<EditMemberPage />}
           />
 
-          <Route 
+          <Route
             path="/plans"
-            element={
-              <ModulePlaceholder title="Membership Plans" />
-            }
+            element={<PlansPage />}
           />
 
           <Route
@@ -113,6 +113,16 @@ export default function App() {
               element={
                 <ModulePlaceholder title="System Settings" />
               }
+            />
+
+            <Route
+              path="/plans/new"
+              element={<PlanFormPage />}
+            />
+
+            <Route
+              path="/plans/:id/edit"
+              element={<PlanFormPage />}
             />
           </Route>
         </Route>
