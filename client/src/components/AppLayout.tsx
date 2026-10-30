@@ -19,6 +19,7 @@ import {
   Users,
   Wallet,
   X,
+  BellRing
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -57,6 +58,11 @@ const menuItems: MenuItem[] = [
     label: "Attendance",
     path: "/attendance",
     icon: CalendarDays,
+  },
+  {
+  label: "Attention Center",
+    path: "/attention",
+    icon: BellRing,
   },
   {
     label: "Reports",
