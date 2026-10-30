@@ -5,6 +5,11 @@ import type {
   ExpiringMembershipResponse,
   OutstandingPaymentResponse,
   AttendanceInactivityResponse,
+  FollowUpType,
+  CreateFollowUpPayload,
+  CreateFollowUpResponse,
+  MemberFollowUpsResponse,
+  DueFollowUpsResponse,
 } from "../types/attention";
 
 interface PaginationParams {
@@ -24,6 +29,10 @@ interface OutstandingParams extends PaginationParams {
 interface InactivityParams extends PaginationParams {
   days?: number;
   search?: string;
+}
+
+interface MemberFollowUpParams extends PaginationParams {
+  alertType?: FollowUpType | "all";
 }
 
 export const attentionApi = {
@@ -60,6 +69,45 @@ export const attentionApi = {
     const response =
       await api.get<AttendanceInactivityResponse>(
         "/attention/inactive-attendance",
+        { params, signal }
+      );
+
+    return response.data;
+  },
+
+  async createFollowUp(
+    payload: CreateFollowUpPayload
+  ): Promise<CreateFollowUpResponse> {
+    const response =
+      await api.post<CreateFollowUpResponse>(
+        "/attention/follow-ups",
+        payload
+      );
+
+    return response.data;
+  },
+
+  async getMemberFollowUps(
+    memberId: string,
+    params: MemberFollowUpParams = {},
+    signal?: AbortSignal
+  ): Promise<MemberFollowUpsResponse> {
+    const response =
+      await api.get<MemberFollowUpsResponse>(
+        `/attention/follow-ups/member/${encodeURIComponent(memberId)}`,
+        { params, signal }
+      );
+
+    return response.data;
+  },
+
+  async getDueFollowUps(
+    params: PaginationParams = {},
+    signal?: AbortSignal
+  ): Promise<DueFollowUpsResponse> {
+    const response =
+      await api.get<DueFollowUpsResponse>(
+        "/attention/follow-ups/due",
         { params, signal }
       );
 

@@ -346,14 +346,24 @@ export default function AttentionPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={refresh}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-gym-card px-4 py-3 text-sm font-bold text-white hover:bg-white/5"
-        >
-          <RefreshCw size={17} />
-          Refresh
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={refresh}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-gym-card px-4 py-3 text-sm font-bold text-white hover:bg-white/5"
+          >
+            <RefreshCw size={17} />
+            Refresh
+          </button>
+
+          <Link
+            to="/attention/follow-ups/due"
+            className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-4 py-3 text-sm font-bold text-white hover:bg-orange-600"
+          >
+            <BellRing size={17} />
+            Due Follow-Ups
+          </Link>
+        </div>
       </header>
 
       {/* Overview cards */}
@@ -616,12 +626,21 @@ export default function AttentionPage() {
                       </span>
                     </div>
 
-                    <Link
-                      to={`/members/${alert.memberId}/membership`}
-                      className="rounded-xl border border-orange-500/30 px-4 py-2.5 text-sm font-bold text-gym-orange hover:bg-orange-500/10"
-                    >
-                      Manage Membership
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        to={`/members/${alert.memberId}/membership`}
+                        className="rounded-xl border border-orange-500/30 px-4 py-2.5 text-sm font-bold text-gym-orange hover:bg-orange-500/10"
+                      >
+                        Manage Membership
+                      </Link>
+
+                      <Link
+                        to={`/attention/follow-ups/member/${alert.memberId}/MEMBERSHIP_EXPIRING`}
+                        className="rounded-xl bg-gym-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600"
+                      >
+                        Record Follow-Up
+                      </Link>
+                    </div>
                   </div>
                 ))}
 
@@ -681,6 +700,13 @@ export default function AttentionPage() {
                       >
                         Billing Dashboard
                       </Link>
+
+                      <Link
+                        to={`/attention/follow-ups/member/${alert.memberId}/PAYMENT_OUTSTANDING`}
+                        className="rounded-xl bg-gym-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600"
+                      >
+                        Record Follow-Up
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -715,12 +741,21 @@ export default function AttentionPage() {
                       </span>
                     </div>
 
-                    <Link
-                      to={`/members/${alert.memberId}`}
-                      className="rounded-xl border border-orange-500/30 px-4 py-2.5 text-sm font-bold text-gym-orange hover:bg-orange-500/10"
-                    >
-                      Member Profile
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        to={`/members/${alert.memberId}`}
+                        className="rounded-xl border border-orange-500/30 px-4 py-2.5 text-sm font-bold text-gym-orange hover:bg-orange-500/10"
+                      >
+                        Member Profile
+                      </Link>
+
+                      <Link
+                        to={`/attention/follow-ups/member/${alert.memberId}/ATTENDANCE_INACTIVE`}
+                        className="rounded-xl bg-gym-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600"
+                      >
+                        Record Follow-Up
+                      </Link>
+                    </div>
                   </div>
                 ))}
             </div>

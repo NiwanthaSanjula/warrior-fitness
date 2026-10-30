@@ -111,3 +111,105 @@ export type AttentionTab =
   | "expiring"
   | "outstanding"
   | "inactive";
+
+  
+export type FollowUpType =
+  | "MEMBERSHIP_EXPIRING"
+  | "PAYMENT_OUTSTANDING"
+  | "ATTENDANCE_INACTIVE";
+
+export type FollowUpMethod =
+  | "PHONE_CALL"
+  | "WHATSAPP"
+  | "SMS"
+  | "EMAIL"
+  | "IN_PERSON"
+  | "INTERNAL_REVIEW";
+
+export type FollowUpOutcome =
+  | "CONTACTED"
+  | "NO_ANSWER"
+  | "PROMISED_ACTION"
+  | "FOLLOW_UP_REQUIRED"
+  | "DECLINED"
+  | "RESOLVED";
+
+export interface FollowUpRecord {
+  id: string;
+  requestId: string;
+
+  memberId: string;
+  alertType: FollowUpType;
+
+  method: FollowUpMethod;
+  outcome: FollowUpOutcome;
+  notes: string;
+
+  nextFollowUpDate: string | null;
+
+  handledBy: string;
+  recordedAt: string;
+  createdAt: string;
+}
+
+export interface CreateFollowUpPayload {
+  requestId: string;
+  memberId: string;
+  alertType: FollowUpType;
+  method: FollowUpMethod;
+  outcome: FollowUpOutcome;
+  notes: string;
+  nextFollowUpDate: string | null;
+}
+
+export interface CreateFollowUpResponse {
+  success: boolean;
+  message: string;
+  replayed: boolean;
+  data: FollowUpRecord;
+}
+export interface MemberFollowUpsResponse {
+  success: boolean;
+
+  member: {
+    id: string;
+    memberReference: string;
+    fullName: string;
+  };
+
+  data: FollowUpRecord[];
+
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface DueFollowUp {
+  followUpId: string;
+  memberId: string;
+
+  memberName: string | null;
+  memberReference: string | null;
+  memberPhone: string | null;
+
+  alertType: FollowUpType;
+  lastMethod: FollowUpMethod;
+  lastOutcome: FollowUpOutcome;
+  lastNotes: string;
+
+  nextFollowUpDate: string;
+  lastRecordedAt: string;
+  handledBy: string;
+}
+export interface DueFollowUpsResponse {
+  success: boolean;
+  asOfDate: string;
+
+  data: DueFollowUp[];
+
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
