@@ -12,6 +12,11 @@ import {
   getMemberInvoices,
 } from "./invoice.controller.js";
 
+import {
+  getAllInvoices,
+  getBillingOverview,
+} from "./invoice.list.controller.js";
+
 export const invoiceRouter = Router();
 
 // Only authenticated gym staff.
@@ -22,6 +27,13 @@ invoiceRouter.use(
 
 // Create an invoice from a purchased membership.
 invoiceRouter.post("/", createInvoice);
+
+invoiceRouter.get("/", getAllInvoices);
+
+invoiceRouter.get(
+  "/overview",
+  getBillingOverview
+);
 
 // Member invoice history.
 // Keep this route before /:id.
