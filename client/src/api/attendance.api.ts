@@ -7,9 +7,12 @@ import type {
   CheckInResponse,
   DailyAttendanceParams,
   DailyAttendanceResponse,
+  MemberAttendanceHistoryParams,
+  MemberAttendanceHistoryResponse,
 } from "../types/attendance";
 
 export const attendanceApi = {
+  // Search registered members.
   async searchMembers(
     query: string,
     signal?: AbortSignal
@@ -26,6 +29,7 @@ export const attendanceApi = {
     return response.data;
   },
 
+  // Record a member check-in.
   async checkIn(
     memberId: string
   ): Promise<CheckInResponse> {
@@ -37,6 +41,7 @@ export const attendanceApi = {
     return response.data;
   },
 
+  // Daily attendance directory.
   async getDaily(
     params: DailyAttendanceParams,
     signal?: AbortSignal
@@ -50,6 +55,7 @@ export const attendanceApi = {
     return response.data;
   },
 
+  // Daily attendance statistics.
   async getSummary(
     date: string,
     signal?: AbortSignal
@@ -59,6 +65,24 @@ export const attendanceApi = {
         "/attendance/summary",
         {
           params: { date },
+          signal,
+        }
+      );
+
+    return response.data;
+  },
+
+  // NEW: Attendance history for a specific member.
+  async getMemberHistory(
+    memberId: string,
+    params: MemberAttendanceHistoryParams = {},
+    signal?: AbortSignal
+  ): Promise<MemberAttendanceHistoryResponse> {
+    const response =
+      await api.get<MemberAttendanceHistoryResponse>(
+        `/attendance/member/${encodeURIComponent(memberId)}`,
+        {
+          params,
           signal,
         }
       );

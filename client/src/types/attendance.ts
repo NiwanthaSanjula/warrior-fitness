@@ -70,3 +70,26 @@ export interface DailyAttendanceParams {
   page?: number;
   limit?: number;
 }
+export interface MemberAttendanceHistoryResponse {
+  success: boolean;
+
+  member: {
+    id: string;
+    memberReference: string;
+    fullName: string;
+  };
+
+  data: AttendanceRecord[];
+
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+export interface MemberAttendanceHistoryParams {
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+

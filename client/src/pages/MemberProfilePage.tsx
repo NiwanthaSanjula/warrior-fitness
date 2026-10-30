@@ -19,7 +19,7 @@ import { getApiErrorMessage } from "../api/api";
 import { useAuth } from "../auth/auth-context";
 
 import MembershipOverview from "../components/members/MembershipOverview";
-
+import AttendanceOverview from "../components/members/AttendanceOverview";
 
 import type { Member } from "../types/member";
 
@@ -347,7 +347,9 @@ export default function MemberProfilePage() {
       <MembershipOverview
         memberId={member.id}
         refreshVersion={refreshKey}
-      />
+      />      
+      {/* Attendance information */}
+      <AttendanceOverview memberId={member.id} />
 
       {/* Personal information */}
       <ProfileSection title="Personal Information">
