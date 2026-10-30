@@ -14,6 +14,7 @@ import { memberRouter } from "./modules/members/member.routes.js";
 import { planRouter } from "./modules/membership-plans/plan.routes.js";
 import { membershipRouter } from "./modules/memberships/membership.routes.js";
 import { invoiceRouter } from "./modules/billing/invoice.routes.js";
+import { paymentRouter } from "./modules/billing/payment.routes.js";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/api/members", memberRouter);
 app.use("/api/plans", planRouter);
 app.use("/api/memberships", membershipRouter);
 app.use("/api/invoices", invoiceRouter);
+app.use("/api/payments", paymentRouter);
 
 // Error handling (must come after routes)
 app.use(notFound);
