@@ -1,4 +1,14 @@
 
+import mongoose from "mongoose";
+
+import {
+  createInvoiceForMembership,
+} from "../billing/invoice.service.js";
+
+import {
+  toPublicInvoice,
+} from "../billing/invoice.model.js";
+
 import type { RequestHandler } from "express";
 
 import { Member } from "../members/member.model.js";
@@ -136,32 +146,65 @@ export const createEnrollment: RequestHandler =
         plan.durationCount
       );
 
+    const staffId = req.staff.id;
+    
     try {
-      const membership = await Membership.create({
-        member: member._id,
-        plan: plan._id,
+      const { membership, invoice } =
+      await mongoose.connection.transaction(
+        async (session) => {
+          // Build the new membership exactly as before.
+          const membership = new Membership({
+            member: member._id,
+            plan: plan._id,
 
-        enrollmentType: "INITIAL",
+            enrollmentType: "INITIAL",
 
-        planSnapshot: {
-          code: plan.code,
-          name: plan.name,
-          durationUnit: plan.durationUnit,
-          durationCount: plan.durationCount,
-          priceLkr: plan.priceLkr,
-        },
+            planSnapshot: {
+              code: plan.code,
+              name: plan.name,
+              durationUnit: plan.durationUnit,
+              durationCount: plan.durationCount,
+              priceLkr: plan.priceLkr,
+            },
 
-        startDate,
-        endDateExclusive,
+            startDate,
+            endDateExclusive,
 
-        enrolledBy: req.staff.id,
-      });
+            enrolledBy: staffId,
+          });
 
-      res.status(201).json({
-        success: true,
-        message: "Member enrolled successfully",
-        data: toPublicMembership(membership, today),
-      });
+          // Write 1: Save membership.
+          await membership.save({ session });
+
+          // Write 2: Save its invoice in the
+          // SAME MongoDB transaction.
+          const invoice =
+            await createInvoiceForMembership(
+              membership,
+              staffId,
+              session
+            );
+
+          return { membership, invoice };
+        }
+      );
+
+    // This response is reached after the
+    // transaction has successfully committed.
+    res.status(201).json({
+      success: true,
+      message: "Member enrolled successfully",
+
+      // Keep the old response structure so
+      // the existing React page still works.
+      data: toPublicMembership(
+        membership,
+        today
+      ),
+
+      // Additional billing information.
+      invoice: toPublicInvoice(invoice, today),
+    });
     } catch (error: unknown) {
       // Also handle concurrent duplicate requests.
       if (

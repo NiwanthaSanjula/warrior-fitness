@@ -20,6 +20,11 @@ import {
   createInvoiceSchema,
 } from "./invoice.validation.js";
 
+import {
+  createInvoiceForMembership,
+} from "./invoice.service.js";
+
+
 const objectIdPattern = /^[a-fA-F0-9]{24}$/;
 
 function isDuplicateKeyError(
@@ -92,33 +97,15 @@ export const createInvoice: RequestHandler =
       return;
     }
 
-    // Use purchased terms, not today's plan price.
-    const totalLkr =
-      membership.planSnapshot.priceLkr;
-
-    const invoiceNumber =
-      `WF-INV-${membership._id.toString().toUpperCase()}`;
-
     const today = todayInColombo();
 
     try {
-      const invoice = await Invoice.create({
-        invoiceNumber,
+      
+const invoice = await createInvoiceForMembership(
+        membership,
+        req.staff.id
+      );
 
-        member: membership.member,
-        membership: membership._id,
-
-        planCode: membership.planSnapshot.code,
-        planName: membership.planSnapshot.name,
-
-        totalLkr,
-        paidLkr: 0,
-
-        // MVP: payment due on invoice issue date.
-        dueDate: today,
-
-        createdBy: req.staff.id,
-      });
 
       res.status(201).json({
         success: true,
