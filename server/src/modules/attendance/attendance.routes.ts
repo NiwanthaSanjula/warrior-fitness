@@ -16,6 +16,10 @@ import {
   getMemberAttendance,
 } from "./attendance.reporting.controller.js";
 
+import {
+  searchAttendanceMembers,
+} from "./attendance.search.controller.js";
+
 export const attendanceRouter = Router();
 
 attendanceRouter.use(
@@ -45,4 +49,9 @@ attendanceRouter.get(
 attendanceRouter.get(
   "/",
   getDailyAttendance
+);
+
+attendanceRouter.get(
+  "/member-search",
+  searchAttendanceMembers
 );
