@@ -797,6 +797,10 @@ export default function InvoiceDetailPage() {
                   <th className="px-5 py-4">
                     Amount
                   </th>
+
+                  <th className="px-5 py-4">
+                    Receipt
+                  </th>
                 </tr>
               </thead>
 
@@ -829,6 +833,16 @@ export default function InvoiceDetailPage() {
 
                     <td className="px-5 py-4 font-bold text-emerald-400">
                       {formatLkr(payment.amountLkr)}
+                    </td>
+       
+                    <td className="px-5 py-4">
+                      <Link
+                        to={`/payments/invoices/${invoice.id}/receipts/${payment.id}`}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-gym-orange hover:text-orange-300 hover:underline"
+                      >
+                        <FileText size={16} />
+                        View Receipt
+                      </Link>
                     </td>
                   </tr>
                 ))}
