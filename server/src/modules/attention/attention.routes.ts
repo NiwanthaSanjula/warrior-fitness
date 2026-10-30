@@ -14,6 +14,11 @@ import {
   getOutstandingPayments,
 } from "./attention.billing.controller.js";
 
+import {
+  getAttendanceInactivityAlerts,
+} from "./attention.inactivity.controller.js";
+
+
 export const attentionRouter = Router();
 
 attentionRouter.use(
@@ -32,3 +37,9 @@ attentionRouter.get(
   "/outstanding",
   getOutstandingPayments
 );
+
+attentionRouter.get(
+  "/inactive-attendance",
+  getAttendanceInactivityAlerts
+);
+
