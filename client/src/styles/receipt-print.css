@@ -1,0 +1,53 @@
+
+/* Hidden duplicate receipt used only when printing. */
+#wf-payment-print-root {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 15mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #18181b !important;
+  }
+
+  /* Hide the React dashboard and other body content. */
+  body > :not(#wf-payment-print-root) {
+    display: none !important;
+  }
+
+  /* Show only the dedicated print receipt. */
+  body > #wf-payment-print-root {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  #wf-payment-print-root .wf-receipt-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #18181b !important;
+  }
+
+  #wf-payment-print-root article,
+  #wf-payment-print-root header,
+  #wf-payment-print-root footer {
+    break-inside: avoid;
+  }
+
+  #wf-payment-print-root {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

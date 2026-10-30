@@ -22,6 +22,9 @@ import EditMemberPage from "./pages/EditMemberPage";
 import PlansPage from "./pages/PlansPage";
 import PlanFormPage from "./pages/PlanFormPage";
 import MemberMembershipPage from "./pages/MemberMembershipPage";
+import BillingPage from "./pages/BillingPage";
+import InvoiceDetailPage from "./pages/InvoiceDetailPage";
+import PaymentReceiptPage from "./pages/PaymentReceiptPage";
 
 function ModulePlaceholder({
   title,
@@ -93,9 +96,17 @@ export default function App() {
 
           <Route
             path="/payments"
-            element={
-              <ModulePlaceholder title="Payments" />
-            }
+            element={<BillingPage />}
+          />
+          
+          <Route
+            path="/payments/invoices/:id"
+            element={<InvoiceDetailPage />}
+          />
+          
+          <Route
+            path="/payments/invoices/:invoiceId/receipts/:paymentId"
+            element={<PaymentReceiptPage />}
           />
 
           <Route

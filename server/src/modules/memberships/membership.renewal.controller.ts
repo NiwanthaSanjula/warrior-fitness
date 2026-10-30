@@ -1,4 +1,15 @@
 
+import mongoose from "mongoose";
+
+import {
+  Invoice,
+  toPublicInvoice,
+} from "../billing/invoice.model.js";
+
+import {
+  createInvoiceForMembership,
+} from "../billing/invoice.service.js";
+
 import type { RequestHandler } from "express";
 
 import { Member } from "../members/member.model.js";
@@ -48,6 +59,13 @@ function isSameRenewalRequest(
       planId.toLowerCase()
   );
 }
+class RenewalConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RenewalConflictError";
+  }
+}
+
 
 // POST /api/memberships/renew
 export const renewMembership: RequestHandler =
@@ -103,14 +121,24 @@ export const renewMembership: RequestHandler =
         });
         return;
       }
-
+      
+      const existingInvoice = await Invoice.findOne({
+        membership: previousRequest._id,
+      });
+  
       res.status(200).json({
         success: true,
         message: "Renewal already processed",
         replayed: true,
+
         data: toPublicMembership(previousRequest),
+
+        invoice: existingInvoice
+          ? toPublicInvoice(existingInvoice)
+          : null,
       });
       return;
+
     }
 
     // Verify member.
@@ -167,98 +195,129 @@ export const renewMembership: RequestHandler =
       return;
     }
 
-    // Find the last purchased membership period.
-    // We use the latest END date, not simply
-    // the record created most recently.
-    const latestMembership = await Membership.findOne({
-      member: member._id,
-    }).sort({
-      endDateExclusive: -1,
-      startDate: -1,
-      _id: -1,
-    });
-
-    if (!latestMembership) {
-      res.status(409).json({
-        success: false,
-        message: "No previous membership found",
-      });
-      return;
-    }
-
+    
     const today = todayInColombo();
-
-    // Early renewal: start after the last
-    // purchased period, preserving unused days.
-    //
-    // Expired membership: start today.
-    const startDate =
-      latestMembership.endDateExclusive > today
-        ? latestMembership.endDateExclusive
-        : today;
-
-    const endDateExclusive =
-      calculateEndDateExclusive(
-        startDate,
-        plan.durationUnit,
-        plan.durationCount
-      );
-
-    // Application-level overlap check.
-    const overlap = await Membership.exists({
-      member: member._id,
-      startDate: { $lt: endDateExclusive },
-      endDateExclusive: { $gt: startDate },
-    });
-
-    if (overlap) {
-      res.status(409).json({
-        success: false,
-        message:
-          "The proposed renewal overlaps an existing membership period",
-      });
-      return;
-    }
+    const staffId = req.staff.id;
 
     try {
-      const renewal = await Membership.create({
-        member: member._id,
-        plan: plan._id,
+      const { renewal, invoice } =
+        await mongoose.connection.transaction(
+          async (session) => {
+            // Find the last purchased membership
+            // WITHIN the transaction.
+            const latestMembership =
+              await Membership.findOne({
+                member: member._id,
+              })
+                .sort({
+                  endDateExclusive: -1,
+                  startDate: -1,
+                  _id: -1,
+                })
+                .session(session);
 
-        enrollmentType: "RENEWAL",
-        renewalRequestId: requestId,
+            if (!latestMembership) {
+              throw new RenewalConflictError(
+                "No previous membership found"
+              );
+            }
 
-        // Keep the purchased terms unchanged.
-        planSnapshot: {
-          code: plan.code,
-          name: plan.name,
-          durationUnit: plan.durationUnit,
-          durationCount: plan.durationCount,
-          priceLkr: plan.priceLkr,
-        },
+            // Renew early: preserve remaining days.
+            // Expired: begin today.
+            const startDate =
+              latestMembership.endDateExclusive > today
+                ? latestMembership.endDateExclusive
+                : today;
 
-        startDate,
-        endDateExclusive,
+            const endDateExclusive =
+              calculateEndDateExclusive(
+                startDate,
+                plan.durationUnit,
+                plan.durationCount
+              );
 
-        enrolledBy: req.staff.id,
-      });
+            // Detect an overlapping period.
+            const overlap = await Membership.exists({
+              member: member._id,
+              startDate: {
+                $lt: endDateExclusive,
+              },
+              endDateExclusive: {
+                $gt: startDate,
+              },
+            }).session(session);
+
+            if (overlap) {
+              throw new RenewalConflictError(
+                "The proposed renewal overlaps an existing membership period"
+              );
+            }
+
+            const renewal = new Membership({
+              member: member._id,
+              plan: plan._id,
+
+              enrollmentType: "RENEWAL",
+              renewalRequestId: requestId,
+
+              planSnapshot: {
+                code: plan.code,
+                name: plan.name,
+                durationUnit: plan.durationUnit,
+                durationCount: plan.durationCount,
+                priceLkr: plan.priceLkr,
+              },
+
+              startDate,
+              endDateExclusive,
+              enrolledBy: staffId,
+            });
+
+            // Write 1: Membership renewal.
+            await renewal.save({ session });
+
+            // Write 2: Its invoice.
+            const invoice =
+              await createInvoiceForMembership(
+                renewal,
+                staffId,
+                session
+              );
+
+            return { renewal, invoice };
+          }
+        );
 
       res.status(201).json({
         success: true,
         message: "Membership renewed successfully",
         replayed: false,
+
+        // Existing React API contract.
         data: toPublicMembership(renewal, today),
+
+        // Additional billing information.
+        invoice: toPublicInvoice(invoice, today),
       });
     } catch (error: unknown) {
+      if (error instanceof RenewalConflictError) {
+        res.status(409).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
+
       if (!isDuplicateKeyError(error)) {
         throw error;
       }
 
-      // Another request may have completed
-      // while this one was being processed.
-      const completedRequest = await Membership.findOne({
-        renewalRequestId: requestId,
-      });
+      // Handle a concurrent retry using the same
+      // requestId after the transaction commits.
+      const completedRequest =
+        await Membership.findOne({
+          renewalRequestId: requestId,
+        });
 
       if (
         completedRequest &&
@@ -268,24 +327,37 @@ export const renewMembership: RequestHandler =
           planId
         )
       ) {
+        const existingInvoice =
+          await Invoice.findOne({
+            membership: completedRequest._id,
+          });
+
         res.status(200).json({
           success: true,
           message: "Renewal already processed",
           replayed: true,
+
           data: toPublicMembership(
             completedRequest,
             today
           ),
+
+          invoice: existingInvoice
+            ? toPublicInvoice(existingInvoice, today)
+            : null,
         });
         return;
       }
 
+      // A different concurrent renewal may have
+      // claimed the same membership start date.
       res.status(409).json({
         success: false,
         message:
-          "Another renewal was processed for this period. Refresh membership history before retrying.",
+          "Another renewal was processed. Refresh membership history before retrying.",
       });
     }
+
   };
 
 // GET /api/memberships/member/:memberId/summary
