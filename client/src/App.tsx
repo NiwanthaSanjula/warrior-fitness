@@ -26,6 +26,7 @@ import BillingPage from "./pages/BillingPage";
 import InvoiceDetailPage from "./pages/InvoiceDetailPage";
 import PaymentReceiptPage from "./pages/PaymentReceiptPage";
 import AttendancePage from "./pages/AttendancePage";
+import AttentionPage from "./pages/AttentionPage";
 
 function ModulePlaceholder({
   title,
@@ -113,6 +114,11 @@ export default function App() {
           <Route
             path="/attendance"
             element={<AttendancePage />}
+          />
+          
+          <Route
+            path="/attention"
+            element={<AttentionPage />}
           />
 
           <Route
