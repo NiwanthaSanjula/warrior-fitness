@@ -69,3 +69,65 @@ export interface InvoiceListParams {
   page?: number;
   limit?: number;
 }
+
+
+export type PaymentMethod =
+  | "CASH"
+  | "BANK_TRANSFER"
+  | "CARD";
+
+export type BillingInvoiceDetail = Omit<
+  BillingInvoice,
+  "memberName" | "memberReference"
+>;
+
+export interface InvoiceDetailResponse {
+  success: boolean;
+  data: BillingInvoiceDetail;
+}
+
+export interface BillingPayment {
+  id: string;
+  paymentNumber: string;
+  requestId: string;
+
+  invoiceId: string;
+  memberId: string;
+
+  currency: "LKR";
+  amountLkr: number;
+  method: PaymentMethod;
+
+  reference: string;
+  notes: string;
+
+  receivedBy: string;
+  receivedAt: string;
+  createdAt: string;
+}
+
+export interface InvoicePaymentsResponse {
+  success: boolean;
+  invoice: BillingInvoiceDetail;
+  data: BillingPayment[];
+  total: number;
+}
+export interface RecordPaymentPayload {
+  invoiceId: string;
+  amountLkr: number;
+  method: PaymentMethod;
+  requestId: string;
+  reference?: string;
+  notes?: string;
+}
+
+export interface RecordPaymentResponse {
+  success: boolean;
+  message: string;
+  replayed: boolean;
+  data: {
+    payment: BillingPayment;
+    invoice: BillingInvoiceDetail;
+  };
+}
+

@@ -421,10 +421,13 @@ export default function BillingPage() {
                       key={invoice.id}
                       className="border-b border-white/5 text-sm transition hover:bg-white/[0.03]"
                     >
-                      <td className="px-5 py-4">
-                        <p className="font-mono text-xs font-bold text-gym-orange">
+                      <td className="px-5 py-4"> 
+                        <Link
+                          to={`/payments/invoices/${invoice.id}`}
+                          className="font-mono text-xs font-bold text-gym-orange hover:text-orange-300 hover:underline"
+                        >
                           {invoice.invoiceNumber}
-                        </p>
+                        </Link>
                       </td>
 
                       <td className="px-5 py-4">
