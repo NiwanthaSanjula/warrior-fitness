@@ -18,6 +18,13 @@ import {
   getAttendanceInactivityAlerts,
 } from "./attention.inactivity.controller.js";
 
+import {
+  createFollowUp,
+  getMemberFollowUps,
+  getDueFollowUps,
+} from "./follow-up.controller.js";
+
+
 
 export const attentionRouter = Router();
 
@@ -42,4 +49,23 @@ attentionRouter.get(
   "/inactive-attendance",
   getAttendanceInactivityAlerts
 );
+
+// Record a follow-up action.
+attentionRouter.post(
+  "/follow-ups",
+  createFollowUp
+);
+
+// Scheduled follow-ups due today or earlier.
+attentionRouter.get(
+  "/follow-ups/due",
+  getDueFollowUps
+);
+
+// Follow-up history for a member.
+attentionRouter.get(
+  "/follow-ups/member/:memberId",
+  getMemberFollowUps
+);
+
 
