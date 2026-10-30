@@ -341,7 +341,7 @@ export default function MemberProfilePage() {
           Profile status is separate from paid
           membership validity.
         </p>
-      </section>
+      </section>  
       
       {/* Membership overview */}
       <MembershipOverview
