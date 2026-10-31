@@ -16,9 +16,11 @@ The existing backend will eventually support both web and member mobile clients 
 - Move the single `/reports` route into the existing `AdminOnlyRoute` group and set the Reports navigation item's existing `adminOnly` flag.
 - Inspect backend reporting protection without changing APIs or authorization rules.
 - Run frontend build/lint, existing relevant tests if available, and Git diff/status checks.
-- Final PM authorization permits staging and committing only the four approved files and pushing `feature/admin-operations-foundation` to origin with commit message `feat(admin): establish sprint governance and secure reports access`.
+- S8-01 was committed and pushed under its final PM authorization with commit message `feat(admin): establish sprint governance and secure reports access`. That authorization does not extend to S8-02 changes.
+- S8-02 is now explicitly authorized for implementation: add development-only Vitest/Supertest/React Testing Library tooling, isolated tests, scripts/lockfiles, and relevant documentation for the existing authentication/authorization baseline. Do not change production authentication behavior or implement permissions/revocation.
+- The project manager has officially approved S8-02 and authorized its final verification, commit with message `test: add authentication and authorization test foundation`, and push to `origin feature/admin-operations-foundation`. Starting S8-03, merging, or opening a PR remains unauthorized.
 
-The task list below reflects the project-manager-approved Sprint 8 roadmap. Starting S8-02 through S8-07 requires separate explicit task authorization; roadmap approval does not authorize implementation.
+The task list below reflects the project-manager-approved Sprint 8 roadmap. S8-00 through S8-02 are approved; starting S8-03 through S8-07 requires separate explicit task authorization.
 
 ## Out of scope
 
@@ -26,6 +28,7 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. Star
 - Daily closing, trainer management, approval workflows, and additional operational modules require separate sprint approval.
 - S8-01 does not implement staff lifecycle management, granular permissions, session revocation, audit logging, or dashboard data integration.
 - No dependency installation, API contract changes, database changes, unrelated refactors, sidebar redesign, merges, rebases, PR creation, or pushes to `develop`/`main` are authorized for S8-01. Commit/push authorization is limited to the four approved files on the feature branch.
+- S8-02 permits development-only test dependencies and the final approved commit/push, but excludes production dependency additions, production data access, real database connections/writes, authentication behavior changes, permissions, session revocation, staff lifecycle changes, audit logging, deployment changes, PRs, merges, rebases, and pushes to `develop`/`main`.
 
 ## Task tracking and acceptance criteria
 
@@ -33,7 +36,7 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. Star
 | --- | --- | --- | --- | --- |
 | S8-00 | Repository Audit | APPROVED | Completed Sprints 1-7 | Actual architecture, authorization gaps, reuse opportunities, risks, and roadmap reviewed and approved by the project manager. |
 | S8-01 | Codex Instructions & Reports Access Fix | APPROVED | S8-00 approval | AGENTS.md content approved; tracker reflects the approved roadmap; Reports route and sidebar restricted to Admin; existing backend and other routes preserved; required checks reported; all five manual browser acceptance checks passed as confirmed by the user; PM completion approval received. |
-| S8-02 | Authentication & Authorization Test Foundation | NOT STARTED | S8-01 completion approval; explicit task authorization | Establish repeatable automated tests and documented test commands for existing authentication, session validation, role guards, and Reports route/sidebar/API access for Admin, Receptionist, and unauthenticated users. Use mocks or an isolated test database, never development/production records. The passing baseline must be approved before S8-03 starts. |
+| S8-02 | Authentication & Authorization Test Foundation | APPROVED | S8-01 approved; explicit implementation and completion approval received | 72 automated tests passed: 50 backend and 22 frontend. Both suites passed repeated runs; backend/frontend builds and frontend ESLint passed; database/network isolation verified; production logic unchanged. PM completion approval received. |
 | S8-03 | Granular Permissions & Session Revocation | NOT STARTED | S8-02 passing test foundation and completion approval; explicit task authorization | PM-approved permission defaults and revocation rules are enforced consistently by backend and frontend; existing role access is preserved unless explicitly changed; revoked sessions remain invalid after reactivation; extend S8-02 tests and keep the baseline passing. |
 | S8-04 | Audit Logging Foundation | NOT STARTED | S8-03 completion approval; S8-02 test foundation; explicit task authorization | Approved audit events identify actor/action/target/outcome without secrets; authorized reads are bounded; covered mutations preserve transaction/idempotency guarantees; automated authorization, redaction, and transaction checks pass. |
 | S8-05 | Staff Management Backend & Frontend | NOT STARTED | S8-03 and S8-04 completion approval; S8-02 test foundation; explicit task authorization | Approved staff API operations and UI work together with matching authorization, validation/loading/error states, audit events, session revocation, historical staff references, and Admin-lockout safeguards; relevant automated tests pass. |
@@ -46,7 +49,7 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. Star
 - `server/src/modules/reports/reports.routes.ts` already applies `requireAuth` and `requireRole("ADMIN")` before all six report endpoints.
 - Preserve inclusive membership starts, exclusive ends, `Asia/Colombo` gym dates, historical snapshots, and whole-number LKR.
 - Preserve existing transaction/idempotency behavior and historical records; later transaction integration requires an approved transaction-capable isolated test database.
-- The frontend has build/lint scripts but no test script/framework. The backend `test` script is a placeholder. S8-01 must not install test tooling.
+- S8-01 installed no test tooling. S8-02 adds Vitest to both packages, Supertest to the backend, and React Testing Library/jsdom to the frontend; `npm test` type-checks and runs once, and `npm run test:watch` starts development watch mode. See `docs/testing/authentication-authorization.md`.
 - S8-02 must introduce and validate the automated authentication/authorization test foundation before S8-03 changes authentication, permissions, or session behavior. S8-03 through S8-07 must extend and preserve that baseline.
 - S8-04 audit logging builds on S8-03 permissions/session controls; S8-05 staff backend/frontend depends on both; S8-06 integrates approved Admin views; S8-07 verifies the complete sprint before an explicitly authorized merge.
 
@@ -80,7 +83,18 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. Star
 | Unauthenticated `/reports` access redirects to `/login`. | PASSED | Confirmed by the user. |
 | Receptionist retains access to Members, Payments, and Attendance. | PASSED | Confirmed by the user. |
 
-S8-01 is `APPROVED` following official project-manager completion approval and user confirmation of all five manual browser acceptance checks. S8-02 through S8-07 remain `NOT STARTED` and require separate task authorization.
+S8-01 is `APPROVED` following official project-manager completion approval and user confirmation of all five manual browser acceptance checks. Its implementation is preserved at commit `91a7a24e49f91fdb1d27b354346de633a835c2cc`. S8-02 is `APPROVED` following official project-manager completion approval; S8-03 through S8-07 remain `NOT STARTED`.
+
+## S8-02 implementation and verification
+
+- Started from a clean `feature/admin-operations-foundation` at the approved S8-01 commit; no branch switch, merge, or rebase.
+- Added development-only testing dependencies, package-local configurations/test TypeScript projects, seven test suites, deterministic fictional fixtures, database/network isolation guards, test/watch scripts, and the testing guide.
+- Production authentication/authorization and business source files are unchanged. No new permission fields, token versioning, or session revocation are implemented.
+- Both complete suites passed on two successful runs: backend 50/50 tests across four suites and frontend 22/22 across three suites, including test type-checking; zero failed/skipped tests. Backend build, frontend TypeScript/Vite build, and frontend ESLint all passed. `git diff --check` passed; final status/stat and source-scope checks were inspected.
+- The backend uses real routers/guards/tokens with mocked persistence/password checks; report calculations are mocked. The frontend uses real routing/navigation/provider logic with mocked leaf pages or API boundaries. No real MongoDB or application API is used.
+- Known finding: nine moderate client development-tooling npm advisories in the existing ESLint/minimatch tree; production-only client audit and backend installation audit are clean. Existing dependency versions and production dependency declarations are preserved.
+- The frontend build retains the existing non-blocking 646 kB JavaScript chunk-size warning. No S8-02 manual browser tests were performed; S8-01's five user-confirmed passes remain preserved.
+- S8-02 is `APPROVED`: the project manager reviewed the 72 passing tests, repeated successful runs, builds/lint, isolation checks, and unchanged production logic. Its final commit/push is explicitly authorized after successful re-verification; S8-03 remains unauthorized and `NOT STARTED`.
 
 ## Review and approval process
 
