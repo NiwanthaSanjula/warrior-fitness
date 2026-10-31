@@ -60,7 +60,8 @@ describe("actual staff authentication routes", () => {
     const cookies = response.headers["set-cookie"] as unknown as string[];
     const [session, ...attributes] = cookies[0]!.split("; ");
     expect(session!.startsWith("wf_session=")).toBe(true);
-    expect(verifyAuthToken(session!.slice("wf_session=".length)) === staff.id).toBe(true);
+    const claims = verifyAuthToken(session!.slice("wf_session=".length));
+    expect(claims.staffId === staff.id && claims.sessionVersion === 0).toBe(true);
     expect(attributes).toEqual(expect.arrayContaining(["HttpOnly", "Path=/api", "SameSite=Lax", "Max-Age=28800"]));
     expect(attributes).not.toContain("Secure"); // NODE_ENV=test uses the non-production cookie setting.
   });
@@ -115,7 +116,7 @@ describe("actual staff authentication routes", () => {
     const response = await authClient().post("/api/auth/login").send(credentials);
     expect(response.status).toBe(200);
     expect(Object.keys(response.body).sort()).toEqual(["message", "staff", "success"]);
-    expect(Object.keys(response.body.staff).sort()).toEqual(["email", "fullName", "id", "isActive", "role"]);
+    expect(Object.keys(response.body.staff).sort()).toEqual(["email", "fullName", "id", "isActive", "permissions", "role"]);
     expect(JSON.stringify(response.body).includes("eyJ")).toBe(false);
     expect(JSON.stringify(response.body).includes("passwordHash")).toBe(false);
   });
@@ -125,7 +126,8 @@ describe("actual staff authentication routes", () => {
     vi.spyOn(Staff, "findById").mockResolvedValue(staff);
     const response = await authClient().get("/api/auth/me").set("Cookie", sessionCookie(staff.id));
     expect(response.status).toBe(200);
-    expect(response.body.staff).toEqual({ id: staff.id, fullName: staff.fullName, email: staff.email, role: staff.role });
+    expect(response.body.staff).toMatchObject({ id: staff.id, fullName: staff.fullName, email: staff.email, role: staff.role });
+    expect(response.body.staff.permissions).toEqual(expect.arrayContaining(["staff.manage", "reports.read"]));
   });
 
   it("rejects /me without a session before querying staff", async () => {

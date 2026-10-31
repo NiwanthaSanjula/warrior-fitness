@@ -24,6 +24,7 @@
 - Never store secrets in Git; use environment configuration and sanitized examples.
 - Avoid logging sensitive request bodies or personal information.
 - Future mobile clients must use authenticated backend APIs, never direct MongoDB access.
+- Staff role, permission, password-hash, and active-status edits must use `server/src/modules/auth/staff-security.service.ts` so each change atomically increments `sessionVersion`; do not bypass it with model saves or raw database updates.
 
 ## Development workflow
 

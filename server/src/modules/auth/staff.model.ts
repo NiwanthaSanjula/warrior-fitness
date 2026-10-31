@@ -4,12 +4,9 @@ import mongoose, {
   type HydratedDocument,
 } from "mongoose";
 
-export const STAFF_ROLES = [
-  "ADMIN",
-  "RECEPTIONIST",
-] as const;
+import { STAFF_ROLES, PERMISSIONS, effectivePermissions, type Permission, type StaffRole } from "./permissions.js";
 
-export type StaffRole = (typeof STAFF_ROLES)[number];
+export { STAFF_ROLES, type StaffRole };
 
 export interface IStaff {
   fullName: string;
@@ -17,6 +14,8 @@ export interface IStaff {
   passwordHash: string;
   role: StaffRole;
   isActive: boolean;
+  permissions?: Permission[];
+  sessionVersion?: number;
 }
 
 const staffSchema = new Schema<IStaff>(
@@ -51,6 +50,16 @@ const staffSchema = new Schema<IStaff>(
       type: Boolean,
       default: true,
     },
+    permissions: {
+      type: [{ type: String, enum: PERMISSIONS }],
+      default: undefined,
+    },
+    sessionVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
+      validate: Number.isSafeInteger,
+    },
   },
   {
     timestamps: true,
@@ -71,5 +80,6 @@ export function toPublicStaff(
     email: staff.email,
     role: staff.role,
     isActive: staff.isActive,
+    permissions: effectivePermissions(staff),
   };
 }

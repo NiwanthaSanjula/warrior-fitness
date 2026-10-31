@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -26,12 +27,13 @@ invoiceRouter.use(
 );
 
 // Create an invoice from a purchased membership.
-invoiceRouter.post("/", createInvoice);
+invoiceRouter.post("/", requirePermission("invoices.create"), createInvoice);
 
-invoiceRouter.get("/", getAllInvoices);
+invoiceRouter.get("/", requirePermission("invoices.read"), getAllInvoices);
 
 invoiceRouter.get(
   "/overview",
+  requirePermission("invoices.read"),
   getBillingOverview
 );
 
@@ -39,8 +41,9 @@ invoiceRouter.get(
 // Keep this route before /:id.
 invoiceRouter.get(
   "/member/:memberId",
+  requirePermission("invoices.read"),
   getMemberInvoices
 );
 
 // Retrieve one invoice.
-invoiceRouter.get("/:id", getInvoiceById);
+invoiceRouter.get("/:id", requirePermission("invoices.read"), getInvoiceById);

@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -22,11 +23,13 @@ paymentRouter.use(
 // Record a payment against an invoice.
 paymentRouter.post(
   "/",
+  requirePermission("payments.record"),
   recordPayment
 );
 
 // Read payment history for an invoice.
 paymentRouter.get(
   "/invoice/:invoiceId",
+  requirePermission("payments.read"),
   getInvoicePayments
 );

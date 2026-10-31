@@ -1,5 +1,6 @@
 
 import type { StaffRole } from "../modules/auth/staff.model.js";
+import type { Permission } from "../modules/auth/permissions.js";
 
 declare global {
   namespace Express {
@@ -9,6 +10,7 @@ declare global {
         fullName: string;
         email: string;
         role: StaffRole;
+        permissions: Permission[];
       };
     }
   }

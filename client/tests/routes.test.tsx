@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import App from "../src/App";
-import { authState, renderWithAuth } from "./helpers/auth";
+import { authState, receptionist, admin, renderWithAuth } from "./helpers/auth";
 
 // Keep App's route tree, real guards, and AppLayout. Replace only leaf content.
 vi.mock("../src/pages/LoginPage", () => ({ default: () => <h1>Login test page</h1> }));
@@ -30,6 +30,31 @@ describe("real application routes and existing guards", () => {
   it("allows an Admin to enter /reports", async () => {
     renderWithAuth(<App />, authState("ADMIN"), "/reports");
     expect(await screen.findByRole("heading", { name: "Reports test page" })).toBeInTheDocument();
+  });
+
+  it.each(["/members", "/payments", "/attendance", "/plans", "/attention", "/attention/follow-ups/due"])("denies %s when the explicit grant list is empty", async (path) => {
+    renderWithAuth(<App />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: [] } }), path);
+    expect(await screen.findByRole("heading", { name: "Dashboard test page" })).toBeInTheDocument();
+  });
+
+  it("retains Admin reports access with an empty stored permission list", async () => {
+    renderWithAuth(<App />, authState("ADMIN", { staff: { ...admin, permissions: [] } }), "/reports");
+    expect(await screen.findByRole("heading", { name: "Reports test page" })).toBeInTheDocument();
+  });
+
+  it("does not turn a Receptionist report grant into Admin access", async () => {
+    renderWithAuth(<App />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["reports.read"] } }), "/reports");
+    expect(await screen.findByRole("heading", { name: "Dashboard test page" })).toBeInTheDocument();
+  });
+
+  it("permits a custom read-only Members route", async () => {
+    renderWithAuth(<App />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["members.read"] } }), "/members");
+    expect(await screen.findByRole("heading", { name: "Members test page" })).toBeInTheDocument();
+  });
+
+  it("denies direct member creation without its write permission", async () => {
+    renderWithAuth(<App />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["members.read"] } }), "/members/new");
+    expect(await screen.findByRole("heading", { name: "Dashboard test page" })).toBeInTheDocument();
   });
 
   it.each([

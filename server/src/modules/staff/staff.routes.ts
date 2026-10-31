@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -28,7 +29,7 @@ const createStaffSchema = z.object({
 });
 
 // Middleware - Only admins can access staff management
-staffRouter.use(requireAuth, requireRole("ADMIN"));
+staffRouter.use(requireAuth, requireRole("ADMIN"), requirePermission("staff.manage"));
 
 // GET /api/staff
 staffRouter.get("/", async (_req, res) => {

@@ -1,5 +1,7 @@
 # Authentication and authorization tests
 
+The counts and versionless-session discussion below describe the approved S8-02 baseline. S8-03 extends that baseline and updates explicitly changed security expectations; see [staff permissions and session security](staff-permissions-session-security.md) for the current policy and rollout requirements.
+
 ## Running the suites
 
 Use the package-local commands from the repository root:

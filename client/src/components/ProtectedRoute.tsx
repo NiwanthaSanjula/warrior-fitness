@@ -3,9 +3,11 @@ import {
   Navigate,
   Outlet,
 } from "react-router";
+import type { ReactNode } from "react";
 
 import { Dumbbell } from "lucide-react";
 import { useAuth } from "../auth/auth-context";
+import { hasPermissions, type Permission } from "../auth/permissions";
 
 function LoadingScreen() {
   return (
@@ -61,4 +63,9 @@ export function AdminOnlyRoute() {
   }
 
   return <Outlet />;
+}
+
+export function PermissionRoute({ permissions, children }: { permissions: Permission[]; children?: ReactNode }) {
+  const { staff } = useAuth();
+  return hasPermissions(staff, ...permissions) ? children ?? <Outlet /> : <Navigate to="/dashboard" replace />;
 }

@@ -1,5 +1,8 @@
 
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/auth-context";
+import { hasPermissions } from "../auth/permissions";
+import PermissionGate from "../components/PermissionGate";
 import type { FormEvent } from "react";
 import { Link } from "react-router";
 
@@ -81,6 +84,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AttendancePage() {
+  const { staff } = useAuth();
+  const canCheckIn = hasPermissions(staff, "attendance.check-in", "memberships.read");
   const today = todayInColombo();
 
   // Reporting
@@ -219,7 +224,7 @@ export default function AttendancePage() {
 
   // Check the selected member's membership coverage.
   useEffect(() => {
-    if (!selectedMember) return;
+    if (!selectedMember || !canCheckIn) return;
 
     const memberId = selectedMember.id;
     const controller = new AbortController();
@@ -244,7 +249,7 @@ export default function AttendancePage() {
       });
 
     return () => controller.abort();
-  }, [selectedMember]);
+  }, [selectedMember, canCheckIn]);
 
   const report =
     reportLoaded?.key === reportKey
@@ -327,6 +332,7 @@ export default function AttendancePage() {
 
   async function handleCheckIn() {
     if (
+      !canCheckIn ||
       !selectedMember ||
       !eligible ||
       checkingIn ||
@@ -391,6 +397,7 @@ export default function AttendancePage() {
       </header>
 
       {/* Quick check-in */}
+      <PermissionGate permissions={["attendance.check-in", "memberships.read"]}>
       <section className="rounded-2xl border border-white/10 bg-gym-card p-6">
         <div className="flex items-center gap-3">
           <UserRoundCheck
@@ -627,6 +634,7 @@ export default function AttendancePage() {
       </section>
 
       {/* Reporting */}
+      </PermissionGate>
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>

@@ -43,6 +43,14 @@ describe("existing role authorization through actual staff/plan routes", () => {
     expect(response.status).toBe(401);
   });
 
+  it("keeps staff administration Admin-only despite an injected staff permission", async () => {
+    const staff = staffFixture("RECEPTIONIST", { permissions: ["staff.manage"] });
+    vi.spyOn(Staff, "findById").mockResolvedValue(staff);
+    const list = vi.spyOn(Staff, "find");
+    expect((await rolesClient().get("/api/staff").set("Cookie", sessionCookie(staff.id))).status).toBe(403);
+    expect(list).not.toHaveBeenCalled();
+  });
+
   it("requireRole itself returns 401 when no authenticated staff was attached", async () => {
     const response = await rolesClient().get("/role-without-auth");
     expect(response.status).toBe(401);

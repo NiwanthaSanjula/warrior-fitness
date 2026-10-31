@@ -17,7 +17,7 @@ function protectedClient() {
 }
 
 function signedCookie(options: jwt.SignOptions = {}, secret = env.JWT_SECRET): string {
-  const token = jwt.sign({}, secret, {
+  const token = jwt.sign({ sessionVersion: 0 }, secret, {
     algorithm: "HS256", subject: staffFixture().id, expiresIn: "1h",
     issuer: "warrior-fitness", audience: "warrior-fitness-web", ...options,
   });
@@ -80,9 +80,12 @@ describe("actual token verification and authentication middleware", () => {
     const cookie = sessionCookie(staff.id);
     expect((await protectedClient().get("/admin").set("Cookie", cookie)).status).toBe(200);
     staff.role = "RECEPTIONIST";
-    expect((await protectedClient().get("/admin").set("Cookie", cookie)).status).toBe(403);
+    staff.sessionVersion = 1;
+    expect((await protectedClient().get("/admin").set("Cookie", cookie)).status).toBe(401);
+    expect((await protectedClient().get("/admin").set("Cookie", sessionCookie(staff.id, 1))).status).toBe(403);
     staff.role = "ADMIN";
-    expect((await protectedClient().get("/admin").set("Cookie", cookie)).status).toBe(200);
-    expect(lookup).toHaveBeenCalledTimes(3);
+    staff.sessionVersion = 2;
+    expect((await protectedClient().get("/admin").set("Cookie", sessionCookie(staff.id, 2))).status).toBe(200);
+    expect(lookup).toHaveBeenCalledTimes(4);
   });
 });

@@ -1,5 +1,8 @@
 
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/auth-context";
+import { hasPermissions } from "../auth/permissions";
+import PermissionGate from "../components/PermissionGate";
 
 import { isAxiosError } from "axios";
 import { Link, useParams } from "react-router";
@@ -120,6 +123,8 @@ function AmountCard({
 }
 
 export default function InvoiceDetailPage() {
+  const { staff } = useAuth();
+  const canReadPayments = hasPermissions(staff, "payments.read");
   const { id } = useParams<{ id: string }>();
 
   const [refreshVersion, setRefreshVersion] =
@@ -180,10 +185,10 @@ export default function InvoiceDetailPage() {
         id,
         controller.signal
       ),
-      billingApi.getInvoicePayments(
+      canReadPayments ? billingApi.getInvoicePayments(
         id,
         controller.signal
-      ),
+      ) : Promise.resolve({ data: [] }),
     ])
       .then(([invoiceResponse, paymentsResponse]) => {
         if (controller.signal.aborted) return;
@@ -206,7 +211,7 @@ export default function InvoiceDetailPage() {
       });
 
     return () => controller.abort();
-  }, [id, requestKey]);
+  }, [id, requestKey, canReadPayments]);
 
   const data =
     loaded?.key === requestKey
@@ -224,6 +229,7 @@ export default function InvoiceDetailPage() {
 
   const onSubmit: SubmitHandler<PaymentFormValues> =
     async (values) => {
+      if (!hasPermissions(staff, "payments.record")) return;
       if (!id || !data) return;
 
       const invoice = data.invoice;
@@ -498,6 +504,7 @@ export default function InvoiceDetailPage() {
       )}
 
       {/* Record payment */}
+      <PermissionGate permissions={["payments.record"]}>
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
         <div className="flex items-center gap-3 border-b border-white/10 p-6">
           <Wallet
@@ -740,6 +747,8 @@ export default function InvoiceDetailPage() {
       </section>
 
       {/* Payment history */}
+      </PermissionGate>
+      <PermissionGate permissions={["payments.read"]}>
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
         <div className="flex items-center gap-3 border-b border-white/10 p-6">
           <CreditCard
@@ -836,13 +845,13 @@ export default function InvoiceDetailPage() {
                     </td>
        
                     <td className="px-5 py-4">
-                      <Link
+                      <PermissionGate permissions={["members.read"]}><Link
                         to={`/payments/invoices/${invoice.id}/receipts/${payment.id}`}
                         className="inline-flex items-center gap-2 text-sm font-bold text-gym-orange hover:text-orange-300 hover:underline"
                       >
                         <FileText size={16} />
                         View Receipt
-                      </Link>
+                      </Link></PermissionGate>
                     </td>
                   </tr>
                 ))}
@@ -852,6 +861,7 @@ export default function InvoiceDetailPage() {
         )}
       </section>
 
+      </PermissionGate>
       <p className="text-xs text-gym-muted">
         Card and bank-transfer entries record
         already-confirmed payments. This screen

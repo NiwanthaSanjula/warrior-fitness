@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -29,7 +30,8 @@ export const reportsRouter = Router();
 // Reports & Analytics: Admin-only.
 reportsRouter.use(
   requireAuth,
-  requireRole("ADMIN")
+  requireRole("ADMIN"),
+  requirePermission("reports.read")
 );
 
 // Financial reports

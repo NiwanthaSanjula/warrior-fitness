@@ -23,6 +23,6 @@ export function mockLoginLookup(staff: ReturnType<typeof staffFixture> | null) {
   return { lookup, select };
 }
 
-export function sessionCookie(staffId: string): string {
-  return `${AUTH_COOKIE_NAME}=${createAuthToken(staffId)}`;
+export function sessionCookie(staffId: string, sessionVersion = 0): string {
+  return `${AUTH_COOKIE_NAME}=${createAuthToken(staffId, sessionVersion)}`;
 }

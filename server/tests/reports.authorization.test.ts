@@ -70,4 +70,12 @@ describe.each(endpoints)("actual Reports authorization: %s", (path, controller) 
       if (handler !== controller) expect(handler).not.toHaveBeenCalled();
     }
   });
+
+  it("keeps financial reports Admin-only despite an injected report permission", async () => {
+    const staff = staffFixture("RECEPTIONIST", { permissions: ["reports.read"] });
+    vi.spyOn(Staff, "findById").mockResolvedValue(staff);
+    const response = await reportsClient().get(path).set("Cookie", sessionCookie(staff.id));
+    expect(response.status).toBe(403);
+    for (const [, handler] of endpoints) expect(handler).not.toHaveBeenCalled();
+  });
 });

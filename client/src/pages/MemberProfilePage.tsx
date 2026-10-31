@@ -17,6 +17,7 @@ import {
 import { membersApi } from "../api/members.api";
 import { getApiErrorMessage } from "../api/api";
 import { useAuth } from "../auth/auth-context";
+import PermissionGate from "../components/PermissionGate";
 
 import MembershipOverview from "../components/members/MembershipOverview";
 import AttendanceOverview from "../components/members/AttendanceOverview";
@@ -265,21 +266,21 @@ export default function MemberProfilePage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link
+            <PermissionGate permissions={["members.update"]}><Link
               to={`/members/${member.id}/edit`}
               className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-bold text-white hover:bg-orange-600"
             >
               <Pencil size={17} />
               Edit Member
-            </Link>
+            </Link></PermissionGate>
 
-            <Link
+            <PermissionGate permissions={["memberships.read"]}><Link
               to={`/members/${member.id}/membership`}
               className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 px-5 py-3 text-sm font-bold text-gym-orange transition hover:bg-orange-500/10"
             >
               <CalendarCheck size={18} />
               Manage Membership
-            </Link>
+            </Link></PermissionGate>
 
 
             <button
@@ -344,12 +345,12 @@ export default function MemberProfilePage() {
       </section>  
       
       {/* Membership overview */}
-      <MembershipOverview
+      <PermissionGate permissions={["memberships.read"]}><MembershipOverview
         memberId={member.id}
         refreshVersion={refreshKey}
-      />      
+      /></PermissionGate>
       {/* Attendance information */}
-      <AttendanceOverview memberId={member.id} />
+      <PermissionGate permissions={["attendance.read"]}><AttendanceOverview memberId={member.id} /></PermissionGate>
 
       {/* Personal information */}
       <ProfileSection title="Personal Information">

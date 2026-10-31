@@ -8,8 +8,10 @@ import {
 
 import {
   AUTH_COOKIE_NAME,
+  authCookieOptions,
   verifyAuthToken,
 } from "../modules/auth/token.js";
+import { effectivePermissions } from "../modules/auth/permissions.js";
 
 export const requireAuth: RequestHandler = async (
   req,
@@ -26,11 +28,12 @@ export const requireAuth: RequestHandler = async (
     return;
   }
 
-  let staffId: string;
+  let session: ReturnType<typeof verifyAuthToken>;
 
   try {
-    staffId = verifyAuthToken(token);
+    session = verifyAuthToken(token);
   } catch {
+    res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions);
     res.status(401).json({
       success: false,
       message: "Invalid or expired session",
@@ -38,13 +41,20 @@ export const requireAuth: RequestHandler = async (
     return;
   }
 
-  const staff = await Staff.findById(staffId);
+  const staff = await Staff.findById(session.staffId);
 
   if (!staff || !staff.isActive) {
+    res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions);
     res.status(401).json({
       success: false,
       message: "Staff account unavailable",
     });
+    return;
+  }
+
+  if (session.sessionVersion !== (staff.sessionVersion ?? 0)) {
+    res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions);
+    res.status(401).json({ success: false, message: "Session revoked. Please sign in again." });
     return;
   }
 
@@ -53,6 +63,7 @@ export const requireAuth: RequestHandler = async (
     fullName: staff.fullName,
     email: staff.email,
     role: staff.role,
+    permissions: effectivePermissions(staff),
   };
 
   next();

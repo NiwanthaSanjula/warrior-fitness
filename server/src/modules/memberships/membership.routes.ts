@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -26,12 +27,14 @@ membershipRouter.use(
 // Create a member's first purchased membership.
 membershipRouter.post(
   "/",
+  requirePermission("memberships.enroll"),
   createEnrollment
 );
 
 // Renew an existing membership.
 membershipRouter.post(
   "/renew",
+  requirePermission("memberships.renew"),
   renewMembership
 );
 
@@ -39,11 +42,13 @@ membershipRouter.post(
 // latest period and overall status.
 membershipRouter.get(
   "/member/:memberId/summary",
+  requirePermission("memberships.read"),
   getMembershipSummary
 );
 
 // Complete membership history.
 membershipRouter.get(
   "/member/:memberId",
+  requirePermission("memberships.read"),
   getMemberMemberships
 );

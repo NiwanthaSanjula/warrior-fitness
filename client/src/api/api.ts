@@ -10,6 +10,23 @@ export const api = axios.create({
   },
 });
 
+const unauthorizedListeners = new Set<() => void>();
+
+export function onUnauthorized(listener: () => void): () => void {
+  unauthorizedListeners.add(listener);
+  return () => { unauthorizedListeners.delete(listener); };
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401 && error.config?.url !== "/auth/login") {
+      for (const listener of unauthorizedListeners) listener();
+    }
+    return Promise.reject(error);
+  }
+);
+
 interface ApiErrorResponse {
   success?: boolean;
   message?: string;

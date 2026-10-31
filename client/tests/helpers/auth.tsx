@@ -3,12 +3,14 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { vi } from "vitest";
 import { AuthContext, type AuthContextValue, type AuthStaff, type StaffRole } from "../../src/auth/auth-context";
+import { PERMISSIONS, RECEPTIONIST_PERMISSIONS } from "../../../server/src/modules/auth/permissions";
 
 export const admin: AuthStaff = {
   id: "000000000000000000000001",
   fullName: "Example Admin",
   email: "admin@example.test",
   role: "ADMIN",
+  permissions: [...PERMISSIONS],
 };
 
 export const receptionist: AuthStaff = {
@@ -16,6 +18,7 @@ export const receptionist: AuthStaff = {
   fullName: "Example Receptionist",
   email: "reception@example.test",
   role: "RECEPTIONIST",
+  permissions: [...RECEPTIONIST_PERMISSIONS],
 };
 
 export function authState(role: StaffRole | null, overrides: Partial<AuthContextValue> = {}): AuthContextValue {
