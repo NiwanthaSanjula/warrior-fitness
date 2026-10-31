@@ -15,28 +15,52 @@ import {
   getReceivablesReport,
 } from "./reports.invoice.controller.js";
 
+import {
+  getMembershipActivity,
+  getActiveMembershipSnapshot,
+} from "./reports.membership.controller.js";
+
+import {
+  getAttendanceTrends,
+} from "./reports.attendance.controller.js";
+
 export const reportsRouter = Router();
 
-// All financial reports are Admin-only.
+// Reports & Analytics: Admin-only.
 reportsRouter.use(
   requireAuth,
   requireRole("ADMIN")
 );
 
-// Actual payments received.
+// Financial reports
 reportsRouter.get(
   "/revenue/collections",
   getRevenueCollections
 );
 
-// Invoices issued during a period.
 reportsRouter.get(
   "/revenue/invoices",
   getInvoiceIssuanceReport
 );
 
-// Outstanding balances as of now.
 reportsRouter.get(
   "/revenue/receivables",
   getReceivablesReport
+);
+
+// Membership analytics
+reportsRouter.get(
+  "/memberships/activity",
+  getMembershipActivity
+);
+
+reportsRouter.get(
+  "/memberships/active",
+  getActiveMembershipSnapshot
+);
+
+// Attendance analytics
+reportsRouter.get(
+  "/attendance/trends",
+  getAttendanceTrends
 );
