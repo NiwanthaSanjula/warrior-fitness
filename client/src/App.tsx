@@ -35,6 +35,7 @@ import ExpenseManagementPage from "./pages/ExpenseManagementPage";
 import DailyCashClosingPage from "./pages/DailyCashClosingPage";
 import ClosingHistoryPage from "./pages/ClosingHistoryPage";
 import StaffManagementPage from "./pages/StaffManagementPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 
 function ModulePlaceholder({
@@ -142,6 +143,7 @@ export default function App() {
 
           {/* Admin-only routes */}
           <Route element={<AdminOnlyRoute />}>
+            <Route path="/notifications" element={<PermissionRoute permissions={["settings.manage"]}><NotificationsPage /></PermissionRoute>} />
             <Route path="/staff" element={<PermissionRoute permissions={["staff.manage"]}><StaffManagementPage /></PermissionRoute>} />
             <Route path="/expenses" element={<PermissionRoute permissions={["expenses.manage"]}><ExpenseManagementPage /></PermissionRoute>} />
             <Route path="/cash-closing" element={<PermissionRoute permissions={["cash-closings.manage"]}><DailyCashClosingPage /></PermissionRoute>} />
