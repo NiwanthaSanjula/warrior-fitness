@@ -22,7 +22,9 @@ describe("existing role authorization through actual staff/plan routes", () => {
   it("allows an Admin to list staff without exposing password hashes", async () => {
     const staff = staffFixture();
     vi.spyOn(Staff, "findById").mockResolvedValue(staff);
-    vi.spyOn(Staff, "find").mockReturnValue({ sort: vi.fn().mockResolvedValue([staff]) } as unknown as ReturnType<typeof Staff.find>);
+    const directoryQuery = { sort: vi.fn().mockReturnThis(), skip: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([staff]) };
+    vi.spyOn(Staff, "find").mockReturnValue(directoryQuery as unknown as ReturnType<typeof Staff.find>);
+    vi.spyOn(Staff, "countDocuments").mockResolvedValue(1);
     const response = await rolesClient().get("/api/staff").set("Cookie", sessionCookie(staff.id));
     expect(response.status).toBe(200);
     expect(response.body.data[0].role).toBe("ADMIN");

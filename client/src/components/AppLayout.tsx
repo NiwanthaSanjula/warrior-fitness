@@ -26,6 +26,7 @@ import {
   ClipboardCheck,
   History,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -103,6 +104,7 @@ const menuItems: MenuEntry[] = [
     icon: Settings,
     adminOnly: true,
   },
+  { label: "Staff Management", path: "/staff", icon: ShieldCheck, adminOnly: true, permissions: ["staff.manage"] },
 ];
 
 function FinanceNavigation({ item, active, locationKey, onNavigate }: {

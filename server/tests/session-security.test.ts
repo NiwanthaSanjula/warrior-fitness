@@ -122,6 +122,7 @@ describe("atomic security-write service for future staff management", () => {
     ["role", { role: "ADMIN" }],
     ["permission", { permissions: [] }],
     ["password", { passwordHash: "fictional-changed-password-hash" }],
+    ["profile", { fullName: "Changed Example", email: "changed@example.test" }],
   ] as const)("rejects old tokens after an approved %s change", async (_label, change) => {
     const original = staffFixture("RECEPTIONIST");
     const cookie = sessionCookie(original.id);
@@ -145,6 +146,7 @@ describe("atomic security-write service for future staff management", () => {
     ["password", { passwordHash: "fictional-replacement-password-hash" }],
     ["deactivation", { isActive: false }],
     ["reactivation", { isActive: true }],
+    ["profile", { fullName: "Changed Example", email: "changed@example.test" }],
   ] as const)("updates %s and increments the version in the same conditional write", async (_label, change) => {
     const staff = staffFixture("RECEPTIONIST", { sessionVersion: 6 });
     const update = vi.spyOn(Staff, "findOneAndUpdate").mockResolvedValue(staff);
