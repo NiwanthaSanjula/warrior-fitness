@@ -29,6 +29,8 @@ import AttendancePage from "./pages/AttendancePage";
 import AttentionPage from "./pages/AttentionPage";
 import MemberFollowUpPage from "./pages/MemberFollowUpPage";
 import DueFollowUpsPage from "./pages/DueFollowUpsPage";
+import ReportsPage from "./pages/ReportsPage";
+
 
 function ModulePlaceholder({
   title,
@@ -135,9 +137,7 @@ export default function App() {
 
           <Route
             path="/reports"
-            element={
-              <ModulePlaceholder title="Reports" />
-            }
+            element={<ReportsPage />}
           />
 
           {/* Admin-only routes */}
