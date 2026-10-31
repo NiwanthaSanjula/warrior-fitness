@@ -114,6 +114,9 @@ const paymentSchema = new Schema<IPayment>(
   }
 );
 
+// Bound daily reconciliation scans by the existing received timestamp.
+paymentSchema.index({ receivedAt: 1, method: 1 });
+
 // Quick access to payments for an invoice.
 paymentSchema.index({
   invoice: 1,

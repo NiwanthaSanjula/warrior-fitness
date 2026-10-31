@@ -37,9 +37,10 @@ describe("frontend permission contract and real action visibility", () => {
   it("shows only permitted operational navigation for a custom Receptionist", () => {
     renderWithAuth(<AppLayout />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["members.read"] } }));
     expect(screen.getByRole("link", { name: "Manage Members" })).toBeInTheDocument();
-    for (const name of ["Payments", "Attendance", "Attention Center", "Membership Plans", "Reports", "Settings"]) {
+    for (const name of ["Payments & Invoices", "Attendance", "Attention Center", "Membership Plans", "Reports", "Settings"]) {
       expect(screen.queryByRole("link", { name })).not.toBeInTheDocument();
     }
+    expect(screen.queryByRole("button", { name: "Finance" })).not.toBeInTheDocument();
   });
 
   it("does not show Admin navigation for forged privileged Receptionist claims", () => {
