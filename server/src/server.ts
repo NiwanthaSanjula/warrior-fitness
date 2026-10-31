@@ -4,14 +4,19 @@ import { connectDatabase } from "./config/db.js";
 import { env } from "./config/env.js";
 import { initializeFinancialModels } from "./modules/financial/financial.service.js";
 import { initializeStaffAdministration } from "./modules/staff/staff.service.js";
+import { initializeNotificationModels } from "./modules/notifications/notification.model.js";
+import { startNotificationScheduler } from "./modules/notifications/notification.scheduler.js";
 
 async function startServer(): Promise<void> {
   try {
     await connectDatabase();
     await initializeFinancialModels();
     await initializeStaffAdministration();
+    await initializeNotificationModels();
 
-    app.listen(env.PORT, "127.0.0.1", () => {
+    const server = app.listen(env.PORT, "127.0.0.1", () => {
+      const scheduler = startNotificationScheduler();
+      server.once("close", () => scheduler?.stop());
       console.log(
         `API running at http://localhost:${env.PORT}✅`
       );

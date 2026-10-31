@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Types } from "mongoose";
+import { NotificationRun } from "./notification-run.model.js";
 
-interface IConsent {
+export interface IConsent {
   member: Types.ObjectId;
   whatsappOptIn: boolean;
   updatedBy: Types.ObjectId;
@@ -10,10 +11,10 @@ const consentSchema = new Schema<IConsent>({
   member: { type: Schema.Types.ObjectId, ref: "Member", unique: true, required: true },
   whatsappOptIn: { type: Boolean, required: true, default: false },
   updatedBy: { type: Schema.Types.ObjectId, ref: "Staff", required: true },
-}, { timestamps: true });
+}, { timestamps: true, strict: "throw" });
 export const NotificationConsent = mongoose.model<IConsent>("NotificationConsent", consentSchema);
 
-interface IReminder {
+export interface IReminder {
   member: Types.ObjectId;
   membership: Types.ObjectId;
   memberReference: string;
@@ -26,7 +27,9 @@ interface IReminder {
   message: string;
   channel: "WHATSAPP_SIMULATED";
   status: "SIMULATED";
-  createdBy: Types.ObjectId;
+  createdBy?: Types.ObjectId | null;
+  trigger?: "MANUAL" | "SCHEDULED";
+  createdAt: Date;
 }
 const reminderSchema = new Schema<IReminder>({
   member: { type: Schema.Types.ObjectId, ref: "Member", required: true },
@@ -41,8 +44,21 @@ const reminderSchema = new Schema<IReminder>({
   message: { type: String, required: true },
   channel: { type: String, enum: ["WHATSAPP_SIMULATED"], required: true },
   status: { type: String, enum: ["SIMULATED"], required: true },
-  createdBy: { type: Schema.Types.ObjectId, ref: "Staff", required: true },
-}, { timestamps: true });
+  createdBy: { type: Schema.Types.ObjectId, ref: "Staff", required: function (this: IReminder | mongoose.Query<unknown, IReminder>) {
+    // Update validators run with a Query, and Query.get() ignores $setOnInsert.
+    if (this instanceof mongoose.Query) {
+      const update = this.getUpdate();
+      return !update || Array.isArray(update) || update.$setOnInsert?.trigger !== "SCHEDULED";
+    }
+    return this?.trigger !== "SCHEDULED";
+  }, default: null },
+  trigger: { type: String, enum: ["MANUAL", "SCHEDULED"], default: "MANUAL" },
+}, { timestamps: { createdAt: true, updatedAt: false }, strict: "throw" });
 reminderSchema.index({ membership: 1, reminderType: 1, scheduledDate: 1 }, { unique: true });
 reminderSchema.index({ createdAt: -1 });
+reminderSchema.index({ scheduledDate: 1 });
 export const ReminderLog = mongoose.model<IReminder>("ReminderLog", reminderSchema);
+
+export async function initializeNotificationModels(): Promise<void> {
+  await Promise.all([NotificationConsent.init(), ReminderLog.init(), NotificationRun.init()]);
+}
