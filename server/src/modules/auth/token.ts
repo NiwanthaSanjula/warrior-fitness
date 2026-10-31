@@ -16,10 +16,12 @@ export const authCookieOptions = {
 };
 
 export function createAuthToken(
-  staffId: string
+  staffId: string,
+  sessionVersion: number
 ): string {
+  if (!Number.isSafeInteger(sessionVersion) || sessionVersion < 0) throw new Error("Invalid session version");
   return jwt.sign(
-    {},
+    { sessionVersion },
     env.JWT_SECRET,
     {
       algorithm: "HS256",
@@ -33,7 +35,7 @@ export function createAuthToken(
 
 export function verifyAuthToken(
   token: string
-): string {
+): { staffId: string; sessionVersion: number } {
   const payload = jwt.verify(
     token,
     env.JWT_SECRET,
@@ -46,12 +48,15 @@ export function verifyAuthToken(
 
   if (
     typeof payload === "string" ||
-    typeof payload.sub !== "string"
+    typeof payload.sub !== "string" ||
+    !/^[a-f\d]{24}$/i.test(payload.sub) ||
+    !Number.isSafeInteger(payload.sessionVersion) ||
+    payload.sessionVersion < 0
   ) {
     throw new Error("Invalid authentication token");
   }
 
-  return payload.sub;
+  return { staffId: payload.sub, sessionVersion: payload.sessionVersion as number };
 }
 
 export function getAuthCookieMaxAge(): number {

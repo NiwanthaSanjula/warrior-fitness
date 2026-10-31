@@ -14,7 +14,9 @@ import {
   authCookieOptions,
   createAuthToken,
   getAuthCookieMaxAge,
+  verifyAuthToken,
 } from "./token.js";
+import { revokeStaffSessions } from "./staff-security.service.js";
 
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 
@@ -77,7 +79,7 @@ authRouter.post("/login", loginLimiter, async (req, res) => {
     return;
   }
 
-  const token = createAuthToken(staff.id);
+  const token = createAuthToken(staff.id, staff.sessionVersion ?? 0);
 
   res.cookie(AUTH_COOKIE_NAME, token, {
     ...authCookieOptions,
@@ -100,7 +102,13 @@ authRouter.get("/me", requireAuth, (req, res) => {
 });
 
 // POST /api/auth/logout
-authRouter.post("/logout", (_req, res) => {
+authRouter.post("/logout", async (req, res) => {
+  const token: unknown = req.cookies?.[AUTH_COOKIE_NAME];
+  let session: ReturnType<typeof verifyAuthToken> | undefined;
+  if (typeof token === "string") {
+    try { session = verifyAuthToken(token); } catch { /* Clearing an unavailable session remains idempotent. */ }
+  }
+  if (session) await revokeStaffSessions(session.staffId, session.sessionVersion);
   res.clearCookie(
     AUTH_COOKIE_NAME,
     authCookieOptions

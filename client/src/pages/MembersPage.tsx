@@ -12,6 +12,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { Link } from "react-router";
+import PermissionGate from "../components/PermissionGate";
 
 import { membersApi } from "../api/members.api";
 import { getApiErrorMessage } from "../api/api";
@@ -168,14 +169,14 @@ export default function MembersPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Link
+          <PermissionGate permissions={["members.create"]}><Link
             to="/members/new"
             className="inline-flex items-center
              gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-extrabold text-white transition hover:bg-orange-600"
           >
             <Plus size={18} />
             Add New Member
-          </Link>
+          </Link></PermissionGate>
 
           <button
             type="button"

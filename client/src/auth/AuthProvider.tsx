@@ -1,8 +1,10 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { authApi } from "../api/auth.api";
+import { onUnauthorized } from "../api/api";
+import { isAxiosError } from "axios";
 
 import {
   AuthContext,
@@ -21,20 +23,28 @@ export function AuthProvider({
   );
 
   const [loading, setLoading] = useState(true);
+  const authRevision = useRef(0);
 
   // Restore session when the application loads
   useEffect(() => {
     let active = true;
+    const unsubscribe = onUnauthorized(() => {
+      authRevision.current++;
+      setStaff(null);
+      setLoading(false);
+    });
 
-    async function restoreSession() {
+    async function restoreSession(revalidate = false) {
+      const revision = authRevision.current;
       try {
         const response = await authApi.getCurrentStaff();
 
-        if (active) {
+        if (active && revision === authRevision.current) {
           setStaff(response.staff);
         }
-      } catch {
-        if (active) {
+      } catch (error: unknown) {
+        if (active && revision === authRevision.current &&
+          (!revalidate || (isAxiosError(error) && error.response?.status === 401))) {
           setStaff(null);
         }
       } finally {
@@ -45,9 +55,13 @@ export function AuthProvider({
     }
 
     void restoreSession();
+    const refreshOnFocus = () => { void restoreSession(true); };
+    window.addEventListener("focus", refreshOnFocus);
 
     return () => {
       active = false;
+      unsubscribe();
+      window.removeEventListener("focus", refreshOnFocus);
     };
   }, []);
 
@@ -56,19 +70,21 @@ export function AuthProvider({
     email: string,
     password: string
   ): Promise<void> {
+    const revision = ++authRevision.current;
     const response = await authApi.login(
       email,
       password
     );
 
-    setStaff(response.staff);
+    if (revision === authRevision.current) setStaff(response.staff);
   }
 
   // Staff logout
   async function logout(): Promise<void> {
+    const revision = ++authRevision.current;
     await authApi.logout();
 
-    setStaff(null);
+    if (revision === authRevision.current) setStaff(null);
   }
 
   return (

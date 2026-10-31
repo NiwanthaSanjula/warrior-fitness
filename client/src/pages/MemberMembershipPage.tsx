@@ -1,5 +1,8 @@
 
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/auth-context";
+import { hasPermissions } from "../auth/permissions";
+import PermissionGate from "../components/PermissionGate";
 import { isAxiosError } from "axios";
 import { Link, useParams } from "react-router";
 import {
@@ -109,6 +112,8 @@ function StatusLabel({ status }: { status: string }) {
 }
 
 export default function MemberMembershipPage() {
+  const { staff } = useAuth();
+  const canReadPlans = hasPermissions(staff, "plans.read");
   const { id } = useParams<{ id: string }>();
 
   const [refreshVersion, setRefreshVersion] = useState(0);
@@ -166,7 +171,7 @@ export default function MemberMembershipPage() {
 
     void Promise.all([
       membersApi.getMemberById(id, controller.signal),
-      plansApi.getPlans("active", controller.signal),
+      canReadPlans ? plansApi.getPlans("active", controller.signal) : Promise.resolve({ data: [] }),
       membershipsApi.getSummary(id, controller.signal),
       membershipsApi.getHistory(id, controller.signal),
     ])
@@ -193,7 +198,7 @@ export default function MemberMembershipPage() {
       });
 
     return () => controller.abort();
-  }, [id, requestKey]);
+  }, [id, requestKey, canReadPlans]);
 
   const data =
     loaded?.key === requestKey
@@ -224,6 +229,7 @@ export default function MemberMembershipPage() {
   const onSubmit: SubmitHandler<
     MembershipFormValues
   > = async (values) => {
+    if (!hasPermissions(staff, "plans.read", isRenewal ? "memberships.renew" : "memberships.enroll")) return;
     if (!id || !data || !data.member.isActive) return;
 
     const plan = data.plans.find(
@@ -472,6 +478,7 @@ export default function MemberMembershipPage() {
       )}
 
       {/* Enrollment / renewal form */}
+      <PermissionGate permissions={["plans.read", isRenewal ? "memberships.renew" : "memberships.enroll"]}>
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
         <div className="flex items-center gap-3 border-b border-white/10 p-6">
           <CalendarCheck
@@ -665,6 +672,7 @@ export default function MemberMembershipPage() {
           </form>
         )}
       </section>
+      </PermissionGate>
 
       {/* Success feedback */}
       {notice && created && (

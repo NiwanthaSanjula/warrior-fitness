@@ -10,6 +10,7 @@ import AppLayout from "./components/AppLayout";
 import {
   AdminOnlyRoute,
   ProtectedRoute,
+  PermissionRoute,
   PublicOnlyRoute,
 } from "./components/ProtectedRoute";
 
@@ -72,76 +73,76 @@ export default function App() {
 
           <Route
             path="/members"
-            element={<MembersPage />}
+            element={<PermissionRoute permissions={["members.read"]}><MembersPage /></PermissionRoute>}
           />
 
           <Route
             path="/members/new"
-            element={<AddMemberPage />}
+            element={<PermissionRoute permissions={["members.create"]}><AddMemberPage /></PermissionRoute>}
           />
 
           <Route
             path="/members/:id"
-            element={<MemberProfilePage />}
+            element={<PermissionRoute permissions={["members.read"]}><MemberProfilePage /></PermissionRoute>}
           />
 
           <Route
             path="/members/:id/edit"
-            element={<EditMemberPage />}
+            element={<PermissionRoute permissions={["members.read", "members.update"]}><EditMemberPage /></PermissionRoute>}
           />
           
           <Route
             path="/members/:id/membership"
-            element={<MemberMembershipPage />}
+            element={<PermissionRoute permissions={["members.read", "memberships.read"]}><MemberMembershipPage /></PermissionRoute>}
           />
 
           <Route
             path="/plans"
-            element={<PlansPage />}
+            element={<PermissionRoute permissions={["plans.read"]}><PlansPage /></PermissionRoute>}
           />
 
           <Route
             path="/payments"
-            element={<BillingPage />}
+            element={<PermissionRoute permissions={["invoices.read"]}><BillingPage /></PermissionRoute>}
           />
           
           <Route
             path="/payments/invoices/:id"
-            element={<InvoiceDetailPage />}
+            element={<PermissionRoute permissions={["invoices.read"]}><InvoiceDetailPage /></PermissionRoute>}
           />
           
           <Route
             path="/payments/invoices/:invoiceId/receipts/:paymentId"
-            element={<PaymentReceiptPage />}
+            element={<PermissionRoute permissions={["invoices.read", "payments.read", "members.read"]}><PaymentReceiptPage /></PermissionRoute>}
           />
           
           <Route
             path="/attendance"
-            element={<AttendancePage />}
+            element={<PermissionRoute permissions={["attendance.read"]}><AttendancePage /></PermissionRoute>}
           />
           
           <Route
             path="/attention"
-            element={<AttentionPage />}
+            element={<PermissionRoute permissions={["attention.read"]}><AttentionPage /></PermissionRoute>}
           />
 
           <Route
             path="/attention/follow-ups/due"
-            element={<DueFollowUpsPage />}
+            element={<PermissionRoute permissions={["follow-ups.read"]}><DueFollowUpsPage /></PermissionRoute>}
           />
 
           <Route
             path="/attention/follow-ups/member/:memberId/:alertType"
-            element={<MemberFollowUpPage />}
-          />
-
-          <Route
-            path="/reports"
-            element={<ReportsPage />}
+            element={<PermissionRoute permissions={["follow-ups.read"]}><MemberFollowUpPage /></PermissionRoute>}
           />
 
           {/* Admin-only routes */}
           <Route element={<AdminOnlyRoute />}>
+            <Route
+              path="/reports"
+              element={<ReportsPage />}
+            />
+
             <Route
               path="/settings"
               element={

@@ -1,5 +1,6 @@
 
 import { createContext, useContext } from "react";
+import type { Permission } from "./permissions";
 
 export type StaffRole = "ADMIN" | "RECEPTIONIST";
 
@@ -8,6 +9,7 @@ export interface AuthStaff {
   fullName: string;
   email: string;
   role: StaffRole;
+  permissions: Permission[];
 }
 
 export interface AuthContextValue {

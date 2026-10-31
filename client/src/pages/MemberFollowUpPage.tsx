@@ -1,5 +1,8 @@
 
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/auth-context";
+import { hasPermissions } from "../auth/permissions";
+import PermissionGate from "../components/PermissionGate";
 import { Link, useParams } from "react-router";
 import { isAxiosError } from "axios";
 
@@ -92,6 +95,7 @@ function readable(value: string): string {
 }
 
 export default function MemberFollowUpPage() {
+  const { staff } = useAuth();
   const { memberId, alertType } = useParams<{
     memberId: string;
     alertType: string;
@@ -211,7 +215,7 @@ export default function MemberFollowUpPage() {
   async function saveFollowUp(
     payload: CreateFollowUpPayload
   ) {
-    if (sending) return;
+    if (sending || !hasPermissions(staff, "follow-ups.create")) return;
 
     setSending(true);
     setActionError("");
@@ -337,12 +341,12 @@ export default function MemberFollowUpPage() {
           </p>
         </div>
 
-        <Link
+        <PermissionGate permissions={["members.read"]}><Link
           to={`/members/${memberId}`}
           className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white hover:bg-white/5"
         >
           View Member Profile
-        </Link>
+        </Link></PermissionGate>
       </header>
 
       {/* Member identity */}
@@ -388,6 +392,7 @@ export default function MemberFollowUpPage() {
       )}
 
       {/* New follow-up */}
+      <PermissionGate permissions={["follow-ups.create"]}>
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
         <div className="flex items-center gap-3 border-b border-white/10 p-6">
           <ClipboardCheck
@@ -572,6 +577,7 @@ export default function MemberFollowUpPage() {
       </section>
 
       {/* History */}
+      </PermissionGate>
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-6">
           <div>

@@ -25,12 +25,14 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "../auth/auth-context";
+import { hasPermissions, type Permission } from "../auth/permissions";
 
 interface MenuItem {
   label: string;
   path: string;
   icon: LucideIcon;
   adminOnly?: boolean;
+  permissions?: Permission[];
 }
 
 const menuItems: MenuItem[] = [
@@ -41,36 +43,44 @@ const menuItems: MenuItem[] = [
   },
   {
     label: "Manage Members",
+    permissions: ["members.read"],
     path: "/members",
     icon: Users,
   },
   {
     label: "Membership Plans",
+    permissions: ["plans.read"],
     path: "/plans",
     icon: CreditCard,
   },
   {
     label: "Payments",
+    permissions: ["invoices.read"],
     path: "/payments",
     icon: Wallet,
   },
   {
     label: "Attendance",
+    permissions: ["attendance.read"],
     path: "/attendance",
     icon: CalendarDays,
   },
   {
   label: "Attention Center",
+    permissions: ["attention.read"],
     path: "/attention",
     icon: BellRing,
   },
   {
     label: "Reports",
+    permissions: ["reports.read"],
     path: "/reports",
     icon: BarChart3,
+    adminOnly: true,
   },
   {
     label: "Settings",
+    permissions: ["settings.manage"],
     path: "/settings",
     icon: Settings,
     adminOnly: true,
@@ -103,8 +113,8 @@ export default function AppLayout() {
 
   const visibleMenu = menuItems.filter(
     (item) =>
-      !item.adminOnly ||
-      staff?.role === "ADMIN"
+      (!item.adminOnly || staff?.role === "ADMIN") &&
+      hasPermissions(staff, ...(item.permissions ?? []))
   );
 
   return (

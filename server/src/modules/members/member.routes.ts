@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -26,20 +27,21 @@ memberRouter.use(
 );
 
 // Member listing and search
-memberRouter.get("/", getMembers);
+memberRouter.get("/", requirePermission("members.read"), getMembers);
 
 // Register a new gym member.
-memberRouter.post("/", createMember);
+memberRouter.post("/", requirePermission("members.create"), createMember);
 
 // Member status changes (admin only)
 memberRouter.patch(
   "/:id/status",
   requireRole("ADMIN"),
+  requirePermission("members.status"),
   updateMemberStatus
 )
 
 // Individual member profile
-memberRouter.get("/:id", getMemberById);
+memberRouter.get("/:id", requirePermission("members.read"), getMemberById);
 
 // Update member profile
-memberRouter.patch("/:id", updateMember);
+memberRouter.patch("/:id", requirePermission("members.update"), updateMember);

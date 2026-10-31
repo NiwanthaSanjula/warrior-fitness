@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -36,35 +37,41 @@ attentionRouter.use(
 // Membership expiry alerts.
 attentionRouter.get(
   "/expiring",
+  requirePermission("attention.read"),
   getExpiringMemberships
 );
 
 // Outstanding payment alerts.
 attentionRouter.get(
   "/outstanding",
+  requirePermission("attention.read"),
   getOutstandingPayments
 );
 
 attentionRouter.get(
   "/inactive-attendance",
+  requirePermission("attention.read"),
   getAttendanceInactivityAlerts
 );
 
 // Record a follow-up action.
 attentionRouter.post(
   "/follow-ups",
+  requirePermission("follow-ups.create"),
   createFollowUp
 );
 
 // Scheduled follow-ups due today or earlier.
 attentionRouter.get(
   "/follow-ups/due",
+  requirePermission("follow-ups.read"),
   getDueFollowUps
 );
 
 // Follow-up history for a member.
 attentionRouter.get(
   "/follow-ups/member/:memberId",
+  requirePermission("follow-ups.read"),
   getMemberFollowUps
 );
 

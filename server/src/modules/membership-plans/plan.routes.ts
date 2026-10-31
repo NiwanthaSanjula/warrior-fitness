@@ -1,5 +1,6 @@
 
 import { Router } from "express";
+import { requirePermission } from "../../middlewares/permission.middleware.js";
 
 import {
   requireAuth,
@@ -27,20 +28,22 @@ planRouter.use(
 );
 
 // Both roles can retrieve permitted plans.
-planRouter.get("/", getPlans);
+planRouter.get("/", requirePermission("plans.read"), getPlans);
 
-planRouter.get("/:id", getPlanById);
+planRouter.get("/:id", requirePermission("plans.read"), getPlanById);
 
 // Only admins can create membership plans.
 planRouter.post(
   "/",
   requireRole("ADMIN"),
+  requirePermission("plans.manage"),
   createPlan
 );
 // Admin only: edit plan details.
 planRouter.patch(
   "/:id",
   requireRole("ADMIN"),
+  requirePermission("plans.manage"),
   updatePlan
 );
 
@@ -48,5 +51,6 @@ planRouter.patch(
 planRouter.patch(
   "/:id/status",
   requireRole("ADMIN"),
+  requirePermission("plans.manage"),
   updatePlanStatus
 );
