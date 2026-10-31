@@ -20,7 +20,7 @@ The existing backend will eventually support both web and member mobile clients 
 - S8-02 is now explicitly authorized for implementation: add development-only Vitest/Supertest/React Testing Library tooling, isolated tests, scripts/lockfiles, and relevant documentation for the existing authentication/authorization baseline. Do not change production authentication behavior or implement permissions/revocation.
 - The project manager approved S8-02 and its completed commit/push with message `test: add authentication and authorization test foundation`. That approval does not authorize committing or pushing S8-03, merging, or opening a PR.
 
-The task list below reflects the project-manager-approved Sprint 8 roadmap. S8-00 through S8-03 are approved. Final PM authorization permits committing the approved S8-03 files with message `feat(auth): implement staff permissions and session revocation` and pushing only `origin feature/admin-operations-foundation`. Dashboard work and all other features require separate authorization; no merge or PR is authorized.
+The task list below reflects the project-manager-approved Sprint 8 roadmap and the subsequent Dashboard priority change. S8-00 through S8-03 are approved. S8-03 was committed and pushed at `37960b2b16126a128b07afbd569178c94398360c`. The PM approved the Daily Operations Command Center under S8-06, delivered before S8-04/S8-05 using existing APIs and permissions, and confirmed all three user-verified browser acceptance checks passed. Final authorization permits committing only the seven approved Dashboard files with message `feat(dashboard): implement daily operations command center` and pushing only `origin feature/admin-operations-foundation`. No merge, PR, or other feature is authorized.
 
 ## Out of scope
 
@@ -40,7 +40,7 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. S8-0
 | S8-03 | Granular Permissions & Session Revocation | APPROVED | S8-02 approved; explicit implementation and completion approval received | Central permission enforcement and session revocation completed; 200 automated tests passed (153 backend, 47 frontend), both builds and frontend lint passed, and all four manual browser acceptance checks passed as confirmed by the user; PM completion approval received. |
 | S8-04 | Audit Logging Foundation | NOT STARTED | S8-03 completion approval; S8-02 test foundation; explicit task authorization | Approved audit events identify actor/action/target/outcome without secrets; authorized reads are bounded; covered mutations preserve transaction/idempotency guarantees; automated authorization, redaction, and transaction checks pass. |
 | S8-05 | Staff Management Backend & Frontend | NOT STARTED | S8-03 and S8-04 completion approval; S8-02 test foundation; explicit task authorization | Approved staff API operations and UI work together with matching authorization, validation/loading/error states, audit events, session revocation, historical staff references, and Admin-lockout safeguards; relevant automated tests pass. |
-| S8-06 | Admin Command Center | NOT STARTED | S8-03 through S8-05 completion approval; S8-02 test foundation; explicit task authorization | Approved metrics and management links reuse existing APIs with correct Colombo date semantics, permission-limited views, and distinct empty/error states; relevant automated tests pass. |
+| S8-06 | Daily Operations Command Center (Admin & Receptionist) | APPROVED | S8-03 approved; S8-02 test foundation; explicit PM priority override permits delivery before S8-04/S8-05 | Real API-backed KPIs, seven-day collections/attendance trends, actionable expiry/overdue/follow-up queues, and permitted quick actions; Receptionists never request Admin Reports; independent loading/empty/error/retry states, refresh, Colombo dates, whole-number LKR, responsive theme; 219 automated tests, both builds, client lint and diff check passed; all three user-confirmed browser checks passed; final PM approval received. |
 | S8-07 | Regression Testing & Merge | NOT STARTED | S8-01 through S8-06 completion approval; explicit task authorization | Required builds/lint and automated authentication, permission, session, audit, staff, dashboard, and existing business-flow regression checks pass; manual results and unresolved issues receive PM review; merge occurs only after explicit PM merge authorization. |
 
 ## Technical dependencies and compatibility
@@ -51,7 +51,7 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. S8-0
 - Preserve existing transaction/idempotency behavior and historical records; later transaction integration requires an approved transaction-capable isolated test database.
 - S8-01 installed no test tooling. S8-02 adds Vitest to both packages, Supertest to the backend, and React Testing Library/jsdom to the frontend; `npm test` type-checks and runs once, and `npm run test:watch` starts development watch mode. See `docs/testing/authentication-authorization.md`.
 - S8-02 must introduce and validate the automated authentication/authorization test foundation before S8-03 changes authentication, permissions, or session behavior. S8-03 through S8-07 must extend and preserve that baseline.
-- S8-04 audit logging builds on S8-03 permissions/session controls; S8-05 staff backend/frontend depends on both; S8-06 integrates approved Admin views; S8-07 verifies the complete sprint before an explicitly authorized merge.
+- Approved priority change: deliver S8-06 using the completed S8-03 permissions and existing read APIs first. Audit logging (S8-04) remains deferred, NOT STARTED, and must precede staff administration (S8-05), which also remains NOT STARTED. Their dependencies and acceptance criteria are preserved. S8-07 still verifies the complete sprint before an explicitly authorized merge.
 
 ## S8-01 verification and review checklist
 
@@ -83,7 +83,7 @@ The task list below reflects the project-manager-approved Sprint 8 roadmap. S8-0
 | Unauthenticated `/reports` access redirects to `/login`. | PASSED | Confirmed by the user. |
 | Receptionist retains access to Members, Payments, and Attendance. | PASSED | Confirmed by the user. |
 
-S8-01 is `APPROVED` following official project-manager completion approval and user confirmation of all five manual browser acceptance checks. Its implementation is preserved at commit `91a7a24e49f91fdb1d27b354346de633a835c2cc`. S8-02 and S8-03 are `APPROVED` following official project-manager completion approval. S8-04 through S8-07 remain `NOT STARTED`.
+S8-01 is `APPROVED` following official project-manager completion approval and user confirmation of all five manual browser acceptance checks. Its implementation is preserved at commit `91a7a24e49f91fdb1d27b354346de633a835c2cc`. S8-02 and S8-03 are `APPROVED` following official project-manager completion approval. S8-06 is `APPROVED` following final PM approval and all three user-confirmed browser acceptance checks. S8-04, S8-05, and S8-07 remain `NOT STARTED`.
 
 ## S8-02 implementation and verification
 
@@ -107,7 +107,28 @@ S8-01 is `APPROVED` following official project-manager completion approval and u
 - Manual browser acceptance: all four checks passed (4/4), as confirmed by the user with final PM approval. These are user-confirmed results, not browser checks executed by Codex; individual check descriptions were not supplied in the approval message.
 - Final source-scope review confirmed billing transactions, membership/attendance/reporting calculation controllers, date calculations, and package manifests/lockfiles are unchanged. No database connection or record modification was performed by Codex.
 - S8-03 is `APPROVED`. Finalization verifies exactly the approved 37 modified and 10 untracked files, updates approval documentation, and runs `git diff --check`. Approved tests/builds/lint are not repeated because application and test code are unchanged.
-- The PM explicitly authorizes staging only S8-03 files, committing with `feat(auth): implement staff permissions and session revocation`, and pushing only `origin feature/admin-operations-foundation`. No merge, PR, Dashboard, or other feature work is authorized.
+- The PM authorized staging only S8-03 files, committing with `feat(auth): implement staff permissions and session revocation`, and pushing only `origin feature/admin-operations-foundation`; finalization completed at `37960b2b16126a128b07afbd569178c94398360c` with a clean working tree and verified remote commit. Dashboard authorization was received separately afterward.
+
+## S8-06 Dashboard priority change and implementation
+
+- Started on clean `feature/admin-operations-foundation` at the requested S8-03 commit `37960b2b16126a128b07afbd569178c94398360c`.
+- Approved scope: replace `/dashboard` placeholders with a responsive Daily Operations Command Center for Admin and permission-limited Receptionists. Preserve existing authentication, business calculations, financial transactions, and membership date rules.
+- Reuse typed `reportsApi.getActiveMembers/getCollections/getReceivables` for Admin only; `attendanceApi.getSummary` for permitted attendance; `attentionApi.getExpiring/getOutstanding/getDueFollowUps` for permitted queues and operational totals. No backend endpoint, API contract, dependency, or database change.
+- Active membership coverage counts active members with valid coverage, not purchased membership periods. Collections are actual payments received; no profit calculation or recent-payments feed is introduced. Overdue balances are already included in outstanding balances.
+- Outstanding API records are already sorted by overdue balance descending. The dashboard filters its first five member records to overdue entries and uses the unfiltered server summary for full outstanding/overdue totals. Links use existing member/membership, billing, Attention Center, and follow-up screens; member-level debt records do not provide invoice IDs.
+- Each source has independent loading/error/retry state; refresh cancels stale requests, clears stale values, and recomputes Colombo today. Date-only API values keep their calendar date in every browser timezone. Empty successful responses differ from failures; failures never render fabricated zero metrics.
+- Verification: server `npm test` passed 153 tests across seven files; client `npm test` passed 66 tests across five files, including 19 new Dashboard cases (219 total, zero failures/skips). Both `npm run build` checks and client `npm run lint` passed. Existing authentication/authorization/session tests remain passing. Client Vite retains the existing non-blocking chunk-size warning (approximately 664 kB).
+- Dashboard tests render the real page, permission helpers, and widgets with typed fictional API-boundary fixtures. Coverage includes Admin data, Receptionist report isolation (also after refresh), restricted and empty grants, read prerequisites on workflow links, genuine zeros/empty queues, independent failures/retries, partial loading, updated refresh values, Colombo midnight/month boundaries, whole-number LKR, and cancellation on permission removal. Existing test network/database guards remain enabled; Codex did not connect to the live application or database. Browser results below were confirmed by the user.
+- All three manual browser acceptance checks PASSED, as confirmed by the user with final PM approval. These are user-verified results, not browser tests executed by Codex.
+
+| Manual browser acceptance check | Result | Confirmation |
+| --- | --- | --- |
+| Admin dashboard shows correct real data. | PASSED | Confirmed by the user. |
+| Receptionist dashboard respects permissions and makes no Admin-only Reports API requests. | PASSED | Confirmed by the user. |
+| Refresh, workflow navigation and mobile responsiveness work. | PASSED | Confirmed by the user. |
+
+- S8-06 is `APPROVED`. Finalization checks the seven approved files and `git diff --check`; the approved test suites/builds/lint are not repeated because application and test code are unchanged.
+- Final PM authorization permits staging only the seven approved Dashboard files, committing with `feat(dashboard): implement daily operations command center`, and pushing only `origin feature/admin-operations-foundation`. S8-00 through S8-03 remain `APPROVED`; S8-04, S8-05 and S8-07 remain `NOT STARTED`. No merge, PR, or further feature work is authorized.
 
 ## Review and approval process
 
