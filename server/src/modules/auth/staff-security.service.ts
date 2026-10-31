@@ -2,8 +2,11 @@ import { z } from "zod";
 import { Staff } from "./staff.model.js";
 import { RECEPTIONIST_PERMISSIONS, STAFF_ROLES, type StaffRole } from "./permissions.js";
 import { AppError } from "../../utils/AppError.js";
+import type { ClientSession } from "mongoose";
 
 const securityChangeSchema = z.strictObject({
+  fullName: z.string().trim().min(2).max(100).optional(),
+  email: z.string().trim().toLowerCase().max(254).pipe(z.email()).optional(),
   role: z.enum(STAFF_ROLES).optional(),
   permissions: z.array(z.enum(RECEPTIONIST_PERMISSIONS)).nullable().optional(),
   isActive: z.boolean().optional(),
@@ -27,13 +30,14 @@ export async function revokeStaffSessions(staffId: string, version: number): Pro
   await Staff.updateOne(versionFilter(staffId, version), { $inc: { sessionVersion: 1 } });
 }
 
-// Shared security-write boundary for S8-05; no staff-edit API/UI is introduced here.
+// Shared security-write boundary, also used by audited Staff Management edits.
 // Do not update these fields through save(), raw updates, or native MongoDB writes.
 export async function updateStaffSecurity(
   actor: { role: StaffRole },
   staffId: string,
   expectedVersion: number,
-  change: StaffSecurityChange
+  change: StaffSecurityChange,
+  session?: ClientSession
 ) {
   if (actor.role !== "ADMIN") throw new AppError(403, "You do not have permission");
   const parsed = securityChangeSchema.safeParse(change);
@@ -46,7 +50,7 @@ export async function updateStaffSecurity(
       ...(permissions === null ? { $unset: { permissions: 1 } } : {}),
       $inc: { sessionVersion: 1 },
     },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true, ...(session ? { session } : {}) }
   );
   if (!staff) throw new AppError(409, "Staff account changed. Refresh and try again.");
   return staff;

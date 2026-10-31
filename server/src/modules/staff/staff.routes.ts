@@ -1,93 +1,53 @@
-
 import { Router } from "express";
-import { requirePermission } from "../../middlewares/permission.middleware.js";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
-
 import { requireAuth, requireRole } from "../../middlewares/auth.middleware.js";
-
+import { requirePermission } from "../../middlewares/permission.middleware.js";
+import { AppError } from "../../utils/AppError.js";
+import { staffPermissionCatalogue } from "./staff-permissions.js";
+import { createReceptionist, getManagedStaff, listStaff, listStaffAudit, mutateStaff } from "./staff.service.js";
 import {
-  Staff,
-  toPublicStaff,
-} from "../auth/staff.model.js";
+  auditQuerySchema, createStaffSchema, resetPasswordSchema, staffIdSchema, staffQuerySchema,
+  updatePermissionsSchema, updateProfileSchema, updateStatusSchema,
+} from "./staff.validation.js";
 
+function parse<T>(schema: z.ZodType<T>, value: unknown): T {
+  const result = schema.safeParse(value);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    throw new AppError(400, `${issue.path.join(".") || "Input"}: ${issue.message}`);
+  }
+  return result.data;
+}
 export const staffRouter = Router();
-
-const createStaffSchema = z.object({
-  fullName: z.string().trim().min(2).max(100),
-
-  email: z.email().trim().toLowerCase(),
-
-  password: z
-    .string()
-    .min(12)
-    .refine(
-      (password) =>
-        Buffer.byteLength(password, "utf8") <= 72,
-      "Password is too long"
-    ),
-});
-
-// Middleware - Only admins can access staff management
 staffRouter.use(requireAuth, requireRole("ADMIN"), requirePermission("staff.manage"));
 
-// GET /api/staff
-staffRouter.get("/", async (_req, res) => {
-  const staffMembers = await Staff.find().sort({
-    createdAt: -1,
-  });
+staffRouter.get("/permissions", (_req, res) => res.json({ success: true, ...staffPermissionCatalogue() }));
+staffRouter.get("/audit", async (req, res) => res.json({ success: true, ...await listStaffAudit(parse(auditQuerySchema, req.query)) }));
+staffRouter.get("/", async (req, res) => res.json({ success: true, ...await listStaff(parse(staffQuerySchema, req.query)) }));
+staffRouter.get("/:id", async (req, res) => res.json({ success: true, staff: await getManagedStaff(parse(staffIdSchema, req.params.id)) }));
 
-  res.status(200).json({
-    success: true,
-    data: staffMembers.map(toPublicStaff),
-  });
-});
-
-// POST /api/staff
+// Preserve the existing create-Receptionist endpoint and response contract.
 staffRouter.post("/", async (req, res) => {
-  const parsed = createStaffSchema.safeParse(req.body);
-
-  if (!parsed.success) {
-    res.status(400).json({
-      success: false,
-      message: "Invalid staff details",
-      errors: parsed.error.issues.map(
-        (issue) => issue.message
-      ),
-    });
-    return;
-  }
-
-  const { fullName, email, password } = parsed.data;
-
-  const existingStaff = await Staff.findOne({
-    email,
-  });
-
-  if (existingStaff) {
-    res.status(409).json({
-      success: false,
-      message: "A staff account with this email already exists",
-    });
-    return;
-  }
-
-  const passwordHash = await bcrypt.hash(
-    password,
-    12
-  );
-
-  const newStaff = await Staff.create({
-    fullName,
-    email,
-    passwordHash,
-    role: "RECEPTIONIST",
-    isActive: true,
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Receptionist account created",
-    staff: toPublicStaff(newStaff),
-  });
+  const staff = await createReceptionist(req.staff!, parse(createStaffSchema, req.body));
+  res.status(201).json({ success: true, message: "Receptionist account created", staff });
+});
+staffRouter.patch("/:id/profile", async (req, res) => {
+  const id = parse(staffIdSchema, req.params.id);
+  const { expectedVersion, ...profile } = parse(updateProfileSchema, req.body);
+  res.json({ success: true, ...await mutateStaff(req.staff!, id, expectedVersion, { kind: "profile", ...profile }) });
+});
+staffRouter.patch("/:id/permissions", async (req, res) => {
+  const id = parse(staffIdSchema, req.params.id);
+  const { expectedVersion, permissions } = parse(updatePermissionsSchema, req.body);
+  res.json({ success: true, ...await mutateStaff(req.staff!, id, expectedVersion, { kind: "permissions", permissions }) });
+});
+staffRouter.patch("/:id/status", async (req, res) => {
+  const id = parse(staffIdSchema, req.params.id);
+  const { expectedVersion, isActive } = parse(updateStatusSchema, req.body);
+  res.json({ success: true, ...await mutateStaff(req.staff!, id, expectedVersion, { kind: "status", isActive }) });
+});
+staffRouter.post("/:id/reset-password", async (req, res) => {
+  const id = parse(staffIdSchema, req.params.id);
+  const { expectedVersion, password } = parse(resetPasswordSchema, req.body);
+  res.json({ success: true, ...await mutateStaff(req.staff!, id, expectedVersion, { kind: "password", password }) });
 });
