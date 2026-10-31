@@ -17,6 +17,7 @@ import { invoiceRouter } from "./modules/billing/invoice.routes.js";
 import { paymentRouter } from "./modules/billing/payment.routes.js";
 import { attendanceRouter } from "./modules/attendance/attendance.routes.js";
 import { attentionRouter } from "./modules/attention/attention.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use("/api/invoices", invoiceRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/attention", attentionRouter);
+app.use("/api/reports", reportsRouter);
 
 // Error handling (must come after routes)
 app.use(notFound);
