@@ -135,13 +135,13 @@ export default function App() {
             element={<MemberFollowUpPage />}
           />
 
-          <Route
-            path="/reports"
-            element={<ReportsPage />}
-          />
-
           {/* Admin-only routes */}
           <Route element={<AdminOnlyRoute />}>
+            <Route
+              path="/reports"
+              element={<ReportsPage />}
+            />
+
             <Route
               path="/settings"
               element={

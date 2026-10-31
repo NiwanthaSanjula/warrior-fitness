@@ -68,6 +68,7 @@ const menuItems: MenuItem[] = [
     label: "Reports",
     path: "/reports",
     icon: BarChart3,
+    adminOnly: true,
   },
   {
     label: "Settings",
