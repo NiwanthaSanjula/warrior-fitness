@@ -2,6 +2,8 @@
 import type { RequestHandler } from "express";
 import mongoose from "mongoose";
 import type { z } from "zod";
+import { financialTransaction, lockOpenFinancialDay } from "../financial/financial-day.service.js";
+import { todayInColombo } from "../memberships/membership.dates.js";
 
 import {
   Invoice,
@@ -90,6 +92,9 @@ export const recordPayment: RequestHandler = async (
   }
 
   const input = parsed.data;
+  // One server timestamp ties the ledger entry to exactly the guarded gym day,
+  // including across transaction retries or Colombo midnight.
+  const receivedAt = new Date();
 
   const {
     invoiceId,
@@ -99,7 +104,7 @@ export const recordPayment: RequestHandler = async (
   } = input;
 
   try {
-    const result = await mongoose.connection.transaction(
+    const result = await financialTransaction(
       async (session) => {
         // The same request ID must not record
         // money more than once.
@@ -139,6 +144,10 @@ export const recordPayment: RequestHandler = async (
             replayed: true,
           };
         }
+
+        // Replays above remain valid after closing. New money writes share the
+        // closing/expense day guard inside this SAME invoice/payment transaction.
+        await lockOpenFinancialDay(todayInColombo(receivedAt), session);
 
         // Load the invoice inside the transaction.
         const invoice = await Invoice.findById(
@@ -213,6 +222,7 @@ export const recordPayment: RequestHandler = async (
           notes: input.notes ?? "",
 
           receivedBy: req.staff!.id,
+          receivedAt,
         });
 
         // Both writes use the SAME transaction.

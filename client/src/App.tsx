@@ -31,6 +31,9 @@ import AttentionPage from "./pages/AttentionPage";
 import MemberFollowUpPage from "./pages/MemberFollowUpPage";
 import DueFollowUpsPage from "./pages/DueFollowUpsPage";
 import ReportsPage from "./pages/ReportsPage";
+import ExpenseManagementPage from "./pages/ExpenseManagementPage";
+import DailyCashClosingPage from "./pages/DailyCashClosingPage";
+import ClosingHistoryPage from "./pages/ClosingHistoryPage";
 
 
 function ModulePlaceholder({
@@ -138,6 +141,9 @@ export default function App() {
 
           {/* Admin-only routes */}
           <Route element={<AdminOnlyRoute />}>
+            <Route path="/expenses" element={<PermissionRoute permissions={["expenses.manage"]}><ExpenseManagementPage /></PermissionRoute>} />
+            <Route path="/cash-closing" element={<PermissionRoute permissions={["cash-closings.manage"]}><DailyCashClosingPage /></PermissionRoute>} />
+            <Route path="/closing-history" element={<PermissionRoute permissions={["cash-closings.manage"]}><ClosingHistoryPage /></PermissionRoute>} />
             <Route
               path="/reports"
               element={<ReportsPage />}

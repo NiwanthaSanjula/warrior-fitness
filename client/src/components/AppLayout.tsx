@@ -1,9 +1,11 @@
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import {
   NavLink,
   Outlet,
+  matchPath,
+  useLocation,
   useNavigate,
 } from "react-router";
 
@@ -19,7 +21,11 @@ import {
   Users,
   Wallet,
   X,
-  BellRing
+  BellRing,
+  ReceiptText,
+  ClipboardCheck,
+  History,
+  ChevronDown,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -35,7 +41,15 @@ interface MenuItem {
   permissions?: Permission[];
 }
 
-const menuItems: MenuItem[] = [
+interface MenuGroup {
+  label: string;
+  icon: LucideIcon;
+  children: MenuItem[];
+}
+
+type MenuEntry = MenuItem | MenuGroup;
+
+const menuItems: MenuEntry[] = [
   {
     label: "Dashboard",
     path: "/dashboard",
@@ -54,10 +68,14 @@ const menuItems: MenuItem[] = [
     icon: CreditCard,
   },
   {
-    label: "Payments",
-    permissions: ["invoices.read"],
-    path: "/payments",
+    label: "Finance",
     icon: Wallet,
+    children: [
+      { label: "Payments & Invoices", path: "/payments", icon: CreditCard, permissions: ["invoices.read"] },
+      { label: "Expense Management", path: "/expenses", icon: ReceiptText, adminOnly: true, permissions: ["expenses.manage"] },
+      { label: "Daily Cash Closing", path: "/cash-closing", icon: ClipboardCheck, adminOnly: true, permissions: ["cash-closings.manage"] },
+      { label: "Closing History", path: "/closing-history", icon: History, adminOnly: true, permissions: ["cash-closings.manage"] },
+    ],
   },
   {
     label: "Attendance",
@@ -87,13 +105,91 @@ const menuItems: MenuItem[] = [
   },
 ];
 
+function FinanceNavigation({ item, active, locationKey, onNavigate }: {
+  item: MenuGroup;
+  active: boolean;
+  locationKey: string;
+  onNavigate: () => void;
+}) {
+  const [disclosure, setDisclosure] = useState({ locationKey, expanded: active });
+  // Reset on navigation (including Back/Forward), keeping the same link DOM so
+  // keyboard focus survives a child navigation. Manual collapse still works.
+  if (disclosure.locationKey !== locationKey) {
+    setDisclosure({ locationKey, expanded: active });
+  }
+  const expanded = disclosure.locationKey === locationKey ? disclosure.expanded : active;
+  const id = useId();
+  const toggle = useRef<HTMLButtonElement>(null);
+  const Icon = item.icon;
+
+  return (
+    <div onKeyDown={(event) => {
+      if (event.key === "Escape" && expanded) {
+        event.preventDefault();
+        event.stopPropagation();
+        setDisclosure({ locationKey, expanded: false });
+        toggle.current?.focus();
+      }
+    }}>
+      <button
+        ref={toggle}
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={id}
+        onClick={() => setDisclosure({ locationKey, expanded: !expanded })}
+        className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-gym-orange ${
+          active ? "bg-gym-orange/10 text-orange-400" : "text-zinc-400 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        <Icon aria-hidden="true" size={19} />
+        <span>{item.label}</span>
+        <ChevronDown aria-hidden="true" size={17} className={`ml-auto transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`} />
+      </button>
+      <ul id={id} aria-label="Finance pages" hidden={!expanded} className="ml-6 mt-1 space-y-1 border-l border-white/10 pl-3">
+        {item.children.map((child) => {
+          const ChildIcon = child.icon;
+          return (
+            <li key={child.path}>
+              <NavLink
+                to={child.path}
+                onClick={onNavigate}
+                className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-gym-orange ${
+                  isActive ? "bg-gym-orange text-white shadow-lg shadow-orange-600/10" : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <ChildIcon aria-hidden="true" size={17} className="shrink-0" />
+                {child.label}
+              </NavLink>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export default function AppLayout() {
   const { staff, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const sidebarId = useId();
+  const navigationToggle = useRef<HTMLButtonElement>(null);
+  const closeMenuButton = useRef<HTMLButtonElement>(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+
+  useEffect(() => {
+    if (menuOpen) closeMenuButton.current?.focus();
+  }, [menuOpen]);
+
+  function closeNavigation() {
+    if (menuOpen) {
+      setMenuOpen(false);
+      navigationToggle.current?.focus();
+    }
+  }
 
   async function handleLogout() {
     setSigningOut(true);
@@ -111,11 +207,16 @@ export default function AppLayout() {
     }
   }
 
-  const visibleMenu = menuItems.filter(
-    (item) =>
-      (!item.adminOnly || staff?.role === "ADMIN") &&
-      hasPermissions(staff, ...(item.permissions ?? []))
-  );
+  const canSeeItem = (item: MenuItem) =>
+    (!item.adminOnly || staff?.role === "ADMIN") &&
+    hasPermissions(staff, ...(item.permissions ?? []));
+  const visibleMenu = menuItems.flatMap<MenuEntry>((item) => {
+    if ("children" in item) {
+      const children = item.children.filter(canSeeItem);
+      return children.length ? [{ ...item, children }] : [];
+    }
+    return canSeeItem(item) ? [item] : [];
+  });
 
   return (
     <div className="min-h-screen bg-gym-bg text-white lg:flex">
@@ -125,17 +226,24 @@ export default function AppLayout() {
         <button
           type="button"
           aria-label="Close navigation"
-          onClick={() => setMenuOpen(false)}
+          onClick={closeNavigation}
           className="fixed inset-0 z-40 bg-black/70 lg:hidden"
         />
       )}
 
       {/* Sidebar */}
       <aside
+        id={sidebarId}
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && menuOpen) {
+            event.preventDefault();
+            closeNavigation();
+          }
+        }}
         className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-gym-sidebar transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           menuOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
+            ? "visible translate-x-0"
+            : "invisible -translate-x-full lg:visible"
         }`}
       >
         {/* Logo */}
@@ -157,9 +265,10 @@ export default function AppLayout() {
           </div>
 
           <button
+            ref={closeMenuButton}
             type="button"
             aria-label="Close menu"
-            onClick={() => setMenuOpen(false)}
+            onClick={closeNavigation}
             className="text-zinc-400 lg:hidden"
           >
             <X size={22} />
@@ -167,21 +276,25 @@ export default function AppLayout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <nav aria-label="Main navigation" className="flex-1 space-y-1 overflow-y-auto p-4">
           <p className="px-4 py-3 text-xs font-bold tracking-widest text-gym-muted">
             GYM OPERATIONS
           </p>
 
           {visibleMenu.map((item) => {
+            if ("children" in item) {
+              const active = item.children.some((child) => matchPath({ path: child.path, end: false }, location.pathname));
+              return <FinanceNavigation key={item.label} item={item} active={active} locationKey={location.key} onNavigate={closeNavigation} />;
+            }
             const Icon = item.icon;
 
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
-                onClick={() => setMenuOpen(false)}
+                onClick={closeNavigation}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition ${
+                  `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-gym-orange ${
                     isActive
                       ? "bg-gym-orange text-white shadow-lg shadow-orange-600/10"
                       : "text-zinc-400 hover:bg-white/5 hover:text-white"
@@ -215,8 +328,11 @@ export default function AppLayout() {
 
           <div className="flex items-center gap-3">
             <button
+              ref={navigationToggle}
               type="button"
               aria-label="Open navigation"
+              aria-expanded={menuOpen}
+              aria-controls={sidebarId}
               onClick={() => setMenuOpen(true)}
               className="rounded-lg p-2 text-white hover:bg-white/10 lg:hidden"
             >

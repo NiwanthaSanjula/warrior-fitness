@@ -18,6 +18,7 @@ import { paymentRouter } from "./modules/billing/payment.routes.js";
 import { attendanceRouter } from "./modules/attendance/attendance.routes.js";
 import { attentionRouter } from "./modules/attention/attention.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
+import { expenseRouter, cashClosingRouter } from "./modules/financial/financial.routes.js";
 
 const app = express();
 
@@ -56,6 +57,8 @@ app.use("/api/payments", paymentRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/attention", attentionRouter);
 app.use("/api/reports", reportsRouter);
+app.use("/api/expenses", expenseRouter);
+app.use("/api/cash-closings", cashClosingRouter);
 
 // Error handling (must come after routes)
 app.use(notFound);
