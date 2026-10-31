@@ -22,6 +22,7 @@ import {
   Wallet,
   X,
   BellRing,
+  MessageSquareText,
   ReceiptText,
   ClipboardCheck,
   History,
@@ -105,6 +106,7 @@ const menuItems: MenuEntry[] = [
     adminOnly: true,
   },
   { label: "Staff Management", path: "/staff", icon: ShieldCheck, adminOnly: true, permissions: ["staff.manage"] },
+  { label: "Notifications", path: "/notifications", icon: MessageSquareText, adminOnly: true, permissions: ["settings.manage"] },
 ];
 
 function FinanceNavigation({ item, active, locationKey, onNavigate }: {
