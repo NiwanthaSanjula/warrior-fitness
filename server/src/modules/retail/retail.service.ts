@@ -36,14 +36,14 @@ async function movement(item: Identified<IRetailProduct>, actor: RetailActor, be
   const record = new StockMovement({ product: item._id, productName: item.name, sku: item.sku, kind, before, after: item.stock, change: item.stock - before, reason, actor: actor.id, actorName: actor.fullName, sale, requestKey, fingerprint: hash, recordedAt });
   await record.save({ session }); return record;
 }
-export async function createProduct(actor: RetailActor, input: z.infer<typeof createProductInput>) {
+export async function createProduct(actor: RetailActor, input: z.infer<typeof createProductInput>, recordedAt = new Date()) {
   retailAccess(actor, ["retail.manage"], true);
   return financialTransaction(async session => {
     if (await RetailProduct.exists({ $or: [{ sku: input.sku }, ...(input.barcode ? [{ barcode: input.barcode }] : [])] }).session(session)) throw new AppError(409, "SKU or barcode is already registered");
     const { initialStock, ...fields } = input;
     const item = new RetailProduct({ ...fields, stock: initialStock, createdBy: actor.id });
     await item.save({ session });
-    await movement(item, actor, 0, "OPENING", "Initial stock at product registration", `opening:${item._id}`, "opening", session);
+    await movement(item, actor, 0, "OPENING", "Initial stock at product registration", `opening:${item._id}`, "opening", session, null, recordedAt);
     return { product: publicProduct(item, actor) };
   });
 }
@@ -54,7 +54,7 @@ export async function updateProduct(actor: RetailActor, id: string, input: z.inf
   if (!item) throw new AppError(409, "Product changed or is unavailable. Refresh before editing.");
   return { product: publicProduct(item, actor) };
 }
-export async function changeStock(actor: RetailActor, id: string, input: z.infer<typeof stockInput>) {
+export async function changeStock(actor: RetailActor, id: string, input: z.infer<typeof stockInput>, recordedAt = new Date()) {
   retailAccess(actor, ["retail.manage"], true);
   const hash = fingerprint([actor.id, id, input.kind, input.change, input.reason]);
   return financialTransaction(async session => {
@@ -68,7 +68,7 @@ export async function changeStock(actor: RetailActor, id: string, input: z.infer
     if (!Number.isSafeInteger(after) || after < 0 || after > MAX_STOCK) throw new AppError(409, "Stock adjustment would exceed inventory limits or make stock negative");
     const updated = await RetailProduct.findOneAndUpdate({ _id: id, version: input.version, stock: item.stock }, { $inc: { stock: input.change, version: 1 } }, { new: true, runValidators: true, session });
     if (!updated) throw new AppError(409, "Stock changed. Refresh before adjusting.");
-    const record = await movement(updated, actor, item.stock, input.kind, input.reason, `manual:${input.requestId}`, hash, session);
+    const record = await movement(updated, actor, item.stock, input.kind, input.reason, `manual:${input.requestId}`, hash, session, null, recordedAt);
     return { product: publicProduct(updated, actor), movement: publicMovement(record), replayed: false };
   });
 }
@@ -80,11 +80,11 @@ export function saleAmounts(lines: { quantity: number; unitPriceLkr: number }[],
   if (method !== "CASH" && cash !== null) throw new AppError(400, "Non-cash sales cannot include cash tendered");
   return { amountLkr: total, changeLkr: method === "CASH" ? cash! - total : 0 };
 }
-export async function checkout(actor: RetailActor, input: CheckoutInput) {
+export async function checkout(actor: RetailActor, input: CheckoutInput, soldAt = new Date()) {
   retailAccess(actor, ["retail.read", "retail.checkout"]);
   const items = [...input.items].sort((a, b) => a.productId.localeCompare(b.productId));
   const hash = fingerprint([actor.id, items, input.method, input.cashTenderedLkr, input.memberId, input.reference, input.expectedTotalLkr]);
-  const soldAt = new Date(), date = todayInColombo(soldAt);
+  const date = todayInColombo(soldAt);
   return financialTransaction(async session => {
     const previous = await RetailSale.findOne({ requestId: input.requestId }).session(session);
     if (previous) {

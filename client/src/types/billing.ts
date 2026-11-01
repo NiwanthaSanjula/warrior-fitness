@@ -86,6 +86,12 @@ export interface InvoiceDetailResponse {
   data: BillingInvoiceDetail;
 }
 
+export interface MemberInvoicesResponse {
+  success: boolean;
+  data: BillingInvoiceDetail[];
+  total: number;
+}
+
 export interface BillingPayment {
   id: string;
   paymentNumber: string;

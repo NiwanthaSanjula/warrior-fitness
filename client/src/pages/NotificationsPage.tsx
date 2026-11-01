@@ -1,3 +1,4 @@
+import { useWorkflowAnchor } from "../hooks/useWorkflowAnchor";
 import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { BellRing, RefreshCw, ShieldCheck } from "lucide-react";
@@ -18,6 +19,7 @@ export default function NotificationsPage() {
   const { staff } = useAuth();
   const allowed = staff?.role === "ADMIN" && hasPermissions(staff, "settings.manage");
   const overview = useDashboardResource(allowed, `${staff?.id}:notifications`, loadOverview);
+  useWorkflowAnchor(overview.state.status === "success", ["automation-status"]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,7 +46,7 @@ export default function NotificationsPage() {
     <section aria-label="Notification totals" className="grid gap-4 sm:grid-cols-3">{[
       ["Eligible today", data?.due.length], ["Simulated today", data?.simulatedToday], ["Latest history entries", data?.recent.length],
     ].map(([label, count]) => <article key={label} className="rounded-2xl border border-white/10 bg-gym-card p-5"><h2 className="text-sm text-gym-muted">{label}</h2><p className="mt-2 text-3xl font-black">{loading ? "Loading…" : count ?? "Unavailable"}</p></article>)}</section>
-    <AutomaticSimulation status={data?.scheduler} loading={loading} />
+    <section id="automation-status" tabIndex={-1} className="scroll-mt-28"><AutomaticSimulation status={data?.scheduler} loading={loading} /></section>
     <ConsentPanel disabled={busy} changed={overview.retry} />
     <DashboardPanel title="Membership reminders" description={data ? `As of ${formatGymDate(data.asOfDate)} · Colombo. Eligibility includes reminders already simulated today; repeats are deduplicated.` : "Opted-in active members at their final purchased coverage milestone."} resource={overview} action={<button disabled={busy || !data?.due.length} onClick={() => void simulate()} className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-bold disabled:opacity-40"><BellRing size={17} aria-hidden="true" />{busy ? "Simulating…" : "Simulate due reminders"}</button>}>{result => <div className="space-y-3">{result.due.length ? result.due.map(item => <article key={item.membershipId + item.reminderType} className="rounded-xl border border-white/10 p-4"><Link to={`/members/${item.memberId}`} className="break-words font-bold text-orange-300">{item.memberName} · {item.memberReference}</Link><p className="mt-2 text-sm text-gym-muted">{item.planName} · Valid through {formatGymDate(item.lastValidDate)} · {labels[item.reminderType]}</p><p className="mt-2 break-words text-sm leading-6 text-zinc-300">{item.message}</p></article>) : <EmptyQueue>No opted-in memberships are at a reminder milestone today.</EmptyQueue>}</div>}</DashboardPanel>
     <DashboardPanel title="Simulation history" description="Latest 50 recorded simulations. Records show simulated activity only; no WhatsApp delivery occurs." resource={overview}>{result => result.recent.length ? <ol className="divide-y divide-white/10">{result.recent.map(item => <li key={item.id} className="flex flex-wrap justify-between gap-3 py-4"><div className="min-w-0"><Link to={`/members/${item.memberId}`} className="break-words font-bold text-orange-300">{item.memberName}</Link><p className="mt-1 text-sm text-gym-muted">{labels[item.reminderType]} · Valid through {formatGymDate(item.lastValidDate)}</p><p className="mt-2 text-xs font-bold text-orange-400">SIMULATED</p><p className="mt-1 text-xs text-gym-muted">{item.trigger === "SCHEDULED" ? "Automatic simulation" : "Manual simulation"}</p></div><p className="text-xs text-gym-muted">{formatFinancialTimestamp(item.createdAt)} · Colombo</p></li>)}</ol> : <EmptyQueue>No simulated notifications yet.</EmptyQueue>}</DashboardPanel>

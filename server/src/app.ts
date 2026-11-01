@@ -1,9 +1,9 @@
 
 import express from "express";
-import cors from "cors";
 import helmet from "helmet";
 
 import { env } from "./config/env.js";
+import { configureHttp } from "./config/http.js";
 import { equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { retailRouter } from "./modules/retail/retail.routes.js";
 import { healthRouter } from "./modules/health/health.routes.js";
@@ -30,12 +30,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 
 // CORS
-app.use(
-  cors({
-    origin: env.CLIENT_URL,
-    credentials: true,
-  })
-);
+configureHttp(app, env);
 
 // Body parsing
 app.use(express.json({ limit: "100kb" }));

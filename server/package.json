@@ -9,7 +9,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed:admin": "tsx src/scripts/seedAdmin.ts"
+    "seed:admin": "tsx src/scripts/seedAdmin.ts",
+    "seed:demo": "tsx src/scripts/seedDemo.ts",
+    "dev:demo": "tsx src/scripts/runDemoServer.ts"
   },
   "keywords": [],
   "author": "",
@@ -39,5 +41,8 @@
     "typescript": "^7.0.2",
     "vite": "8.3.5",
     "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

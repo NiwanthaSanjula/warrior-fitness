@@ -18,19 +18,20 @@ async function startServer(): Promise<void> {
     await initializeNotificationModels();
     await initializeEquipmentModels();
 
-    const server = app.listen(env.PORT, "127.0.0.1", () => {
+    const host = env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
+    const server = app.listen(env.PORT, host, () => {
       const scheduler = startNotificationScheduler();
       server.once("close", () => scheduler?.stop());
       console.log(
-        `API running at http://localhost:${env.PORT}✅`
+        `API listening on ${host}:${env.PORT}`
       );
 
       console.log(
         `Environment: ${env.NODE_ENV}`
       );
     });
-  } catch (error) {
-    console.error("Server startup failed:", error);
+  } catch {
+    console.error("Server startup failed. Verify the database connection and required environment settings.");
     process.exit(1);
   }
 }

@@ -1,4 +1,4 @@
-import type { ActiveMembersReport, CollectionsReport, ReceivablesReport } from "../../src/types/reports";
+import type { ActiveMembersReport, CollectionsReport, MembershipActivityReport, ReceivablesReport } from "../../src/types/reports";
 import type { AttendanceSummaryResponse } from "../../src/types/attendance";
 import type { DueFollowUpsResponse, ExpiringMembershipResponse, OutstandingPaymentResponse } from "../../src/types/attention";
 
@@ -6,6 +6,13 @@ import type { DueFollowUpsResponse, ExpiringMembershipResponse, OutstandingPayme
 export const gymDate = "2026-11-01";
 const dates = ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31", gymDate];
 const generatedAt = "2026-10-31T20:00:00.000Z";
+
+export const activityFixture: MembershipActivityReport = {
+  success: true, reportType: "MEMBERSHIP_ACTIVITY", timezone: "Asia/Colombo", period: { from: dates[0], to: gymDate, days: 7 },
+  summary: { totalPurchases: 12, uniquePurchasingMembers: 11 },
+  byType: [{ enrollmentType: "INITIAL", purchases: 8 }, { enrollmentType: "RENEWAL", purchases: 4 }],
+  byPlan: [{ planName: "Monthly", purchases: 9 }, { planName: "Quarterly", purchases: 3 }], byDay: dates.map((date, index) => ({ date, purchases: [1, 2, 1, 2, 1, 3, 2][index] })),
+};
 
 export const activeFixture: ActiveMembersReport = {
   success: true, reportType: "ACTIVE_MEMBERS_SNAPSHOT", timezone: "Asia/Colombo", asOfDate: gymDate, generatedAt,

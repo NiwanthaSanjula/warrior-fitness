@@ -436,11 +436,6 @@ export default function MemberProfilePage() {
         </div>
       </ProfileSection>
 
-      <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-5 text-sm text-orange-200">
-        Membership plans, renewal history, payments
-        and attendance will appear here after their
-        respective modules are implemented.
-      </div>
     </div>
   );
 }

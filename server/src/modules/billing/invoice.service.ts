@@ -26,7 +26,8 @@ import { Invoice } from "./invoice.model.js";
 export async function createInvoiceForMembership(
   membership: HydratedDocument<IMembership>,
   staffId: string,
-  session?: ClientSession
+  session?: ClientSession,
+  issuedAt = new Date()
 ) {
   const invoiceNumber =
     `WF-INV-${membership._id.toString().toUpperCase()}`;
@@ -45,7 +46,8 @@ export async function createInvoiceForMembership(
     totalLkr: membership.planSnapshot.priceLkr,
     paidLkr: 0,
 
-    dueDate: todayInColombo(),
+    dueDate: todayInColombo(issuedAt),
+    createdAt: issuedAt,
     createdBy: staffId,
   });
 

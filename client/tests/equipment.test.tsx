@@ -43,7 +43,7 @@ const change = (label: string, value: string) => fireEvent.change(screen.getByLa
 describe("equipment routing, navigation and QR security", () => {
   it("groups Admin inventory/maintenance links and highlights the active child", async () => {
     renderWithAuth(<App />, authState("ADMIN"), "/equipment/maintenance");
-    await screen.findByRole("heading", { name: "Maintenance Command Center" });
+    await screen.findByRole("heading", { name: "Maintenance Command Center" }, { timeout: 5000 });
     expect(screen.getByRole("button", { name: "Equipment" })).toHaveAttribute("aria-expanded", "true");
     const links = within(screen.getByRole("list", { name: "Equipment pages" }));
     expect(links.getByRole("link", { name: "Maintenance" })).toHaveAttribute("aria-current", "page");

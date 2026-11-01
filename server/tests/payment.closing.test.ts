@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { paymentRouter } from "../src/modules/billing/payment.routes.js";
 import { Payment, type IPayment } from "../src/modules/billing/payment.model.js";
+import { recordPaymentLedger } from "../src/modules/billing/payment.controller.js";
 import { Invoice } from "../src/modules/billing/invoice.model.js";
 import { FinancialDay } from "../src/modules/financial/financial-day.model.js";
 import { Staff } from "../src/modules/auth/staff.model.js";
@@ -12,7 +13,7 @@ import { testClient } from "./helpers/http.js";
 import { sessionCookie, staffFixture } from "./helpers/staff.js";
 
 const session = {} as ClientSession;
-const input = { invoiceId: "000000000000000000000010", requestId: "a93fa840-22d1-4e6f-86bc-c397822e8b8b", amountLkr: 500, method: "CASH" };
+const input = { invoiceId: "000000000000000000000010", requestId: "a93fa840-22d1-4e6f-86bc-c397822e8b8b", amountLkr: 500, method: "CASH" as const };
 const sessionResult = (value: unknown) => ({ session: vi.fn().mockResolvedValue(value) }) as never;
 const saved: HydratedDocument<IPayment>[] = [];
 function client() {
@@ -32,6 +33,18 @@ beforeEach(() => {
 });
 
 describe("existing payment transaction participates in financial-day protection", () => {
+  it("uses an internal demo timestamp for the SAME guarded invoice/payment transaction", async () => {
+    const receivedAt = new Date("2026-01-05T20:00:00Z");
+    await recordPaymentLedger(input, { id: staffFixture().id }, receivedAt);
+    expect(FinancialDay.findOneAndUpdate).toHaveBeenCalledWith({ _id: "2026-01-06" }, expect.any(Object), expect.objectContaining({ session }));
+    expect(saved[0].receivedAt.toISOString()).toBe(receivedAt.toISOString());
+    expect(Invoice.findOneAndUpdate).toHaveBeenCalledWith(expect.objectContaining({ paidLkr: { $lte: 500 } }), { $inc: { paidLkr: 500 } }, { new: true, session });
+  });
+  it("does not let the internal demo timestamp bypass a closed historical day", async () => {
+    vi.mocked(FinancialDay.findOneAndUpdate).mockResolvedValue(new FinancialDay({ _id: "2026-01-06", closed: true, revision: 5 }));
+    await expect(recordPaymentLedger(input, { id: staffFixture().id }, new Date("2026-01-05T20:00:00Z"))).rejects.toHaveProperty("statusCode", 409);
+    expect(Invoice.findOneAndUpdate).not.toHaveBeenCalled(); expect(Payment.prototype.save).not.toHaveBeenCalled();
+  });
   it("locks the timestamp's Colombo day and preserves conditional invoice increment plus payment save", async () => {
     vi.setSystemTime(new Date("2026-01-15T20:00:00.000Z"));
     const response = await client().post("/api/payments").set("Cookie", sessionCookie(staffFixture("RECEPTIONIST").id)).send(input);

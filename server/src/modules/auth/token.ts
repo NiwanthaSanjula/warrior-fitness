@@ -11,7 +11,7 @@ export const AUTH_COOKIE_NAME = "wf_session";
 export const authCookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === "production",
-  sameSite: "lax" as const,
+  sameSite: env.NODE_ENV === "production" ? "none" as const : "lax" as const,
   path: "/api",
 };
 

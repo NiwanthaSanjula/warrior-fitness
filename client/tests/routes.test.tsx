@@ -6,6 +6,7 @@ import { authState, receptionist, admin, renderWithAuth } from "./helpers/auth";
 // Keep App's route tree, real guards, and AppLayout. Replace only leaf content.
 vi.mock("../src/pages/LoginPage", () => ({ default: () => <h1>Login test page</h1> }));
 vi.mock("../src/pages/DashboardPage", () => ({ default: () => <h1>Dashboard test page</h1> }));
+vi.mock("../src/pages/FrontDeskPage", () => ({ default: () => <h1>Front Desk test page</h1> }));
 vi.mock("../src/pages/ReportsPage", () => ({ default: () => <h1>Reports test page</h1> }));
 vi.mock("../src/pages/MembersPage", () => ({ default: () => <h1>Members test page</h1> }));
 vi.mock("../src/pages/BillingPage", () => ({ default: () => <h1>Payments test page</h1> }));
@@ -15,6 +16,25 @@ vi.mock("../src/pages/AttentionPage", () => ({ default: () => <h1>Attention test
 vi.mock("../src/pages/DueFollowUpsPage", () => ({ default: () => <h1>Follow-ups test page</h1> }));
 
 describe("real application routes and existing guards", () => {
+  it.each(["ADMIN", "RECEPTIONIST"] as const)("allows %s Front Desk access and navigation", async role => {
+    renderWithAuth(<App />, authState(role), "/front-desk");
+    expect(await screen.findByRole("heading", { name: "Front Desk test page" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Front Desk" })).toHaveAttribute("aria-current", "page");
+  });
+  it("redirects unauthenticated Front Desk access through the existing login guard", async () => {
+    renderWithAuth(<App />, authState(null), "/front-desk");
+    expect(await screen.findByRole("heading", { name: "Login test page" })).toBeInTheDocument();
+  });
+  it("hides and denies Front Desk when member access is revoked", async () => {
+    renderWithAuth(<App />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["attendance.check-in"] } }), "/front-desk");
+    expect(await screen.findByRole("heading", { name: "Dashboard test page" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Front Desk" })).not.toBeInTheDocument();
+  });
+  it("preserves Front Desk route access for the former attendance-only check-in grants", async () => {
+    renderWithAuth(<App />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["attendance.read", "attendance.check-in", "memberships.read"] } }), "/front-desk");
+    expect(await screen.findByRole("heading", { name: "Front Desk test page" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Front Desk" })).toHaveAttribute("aria-current", "page");
+  });
   it("redirects unauthenticated /reports access to login", async () => {
     renderWithAuth(<App />, authState(null), "/reports");
     expect(await screen.findByRole("heading", { name: "Login test page" })).toBeInTheDocument();

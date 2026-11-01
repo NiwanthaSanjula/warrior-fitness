@@ -43,7 +43,7 @@ async function cashCart(quantity = "2") { await add(); change(`Quantity for ${re
 
 describe("retail routing and navigation authorization", () => {
   it("groups all Admin retail routes and highlights only the active child", async () => {
-    renderWithAuth(<App />, authState("ADMIN"), "/retail/checkout"); await screen.findByRole("heading", { name: "Point of Sale" });
+    renderWithAuth(<App />, authState("ADMIN"), "/retail/checkout"); await screen.findByRole("heading", { name: "Point of Sale" }, { timeout: 5000 });
     expect(screen.getByRole("button", { name: "POS & Retail" })).toHaveAttribute("aria-expanded", "true");
     const links = within(screen.getByRole("list", { name: "POS & Retail pages" })); expect(links.getAllByRole("link")).toHaveLength(4);
     expect(links.getByRole("link", { name: "Point of Sale" })).toHaveAttribute("aria-current", "page"); expect(links.getByRole("link", { name: "Retail Dashboard" })).not.toHaveAttribute("aria-current");

@@ -1,6 +1,8 @@
 
 **/node_modules/
 **/dist/
+**/.vercel/
+**/.render/
 **/.env
 **/.env.*
 !**/.env.example

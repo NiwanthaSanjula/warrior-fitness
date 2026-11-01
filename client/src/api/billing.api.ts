@@ -9,9 +9,13 @@ import type {
   InvoicePaymentsResponse,
   RecordPaymentPayload,
   RecordPaymentResponse,
+  MemberInvoicesResponse,
 } from "../types/billing";
 
 export const billingApi = {
+  async getMemberInvoices(memberId: string, signal?: AbortSignal): Promise<MemberInvoicesResponse> {
+    return (await api.get<MemberInvoicesResponse>(`/invoices/member/${encodeURIComponent(memberId)}`, { signal })).data;
+  },
   // Billing dashboard
   async getInvoices(
     params: InvoiceListParams = {},

@@ -4,6 +4,7 @@ import { requireAuth, requireRole } from "../../middlewares/auth.middleware.js";
 import { requirePermission } from "../../middlewares/permission.middleware.js";
 import { AppError } from "../../utils/AppError.js";
 import { getConsent, getNotificationOverview, saveConsent, simulateDueReminders } from "./notification.service.js";
+import { getAutomaticScheduleStatus } from "./notification.scheduler-status.js";
 
 export const notificationRouter = Router();
 notificationRouter.use(requireAuth, requireRole("ADMIN"), requirePermission("settings.manage"));
@@ -16,6 +17,8 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   return parsed.data;
 }
 notificationRouter.get("/overview", async (_req, res) => res.json(await getNotificationOverview()));
+// Dashboard health does not need reminder messages, recipients or eligibility scans.
+notificationRouter.get("/automation-status", async (_req, res) => res.json({ success: true, scheduler: await getAutomaticScheduleStatus() }));
 notificationRouter.get("/consent/:memberId", async (req, res) => res.json(await getConsent(parse(id, req.params.memberId))));
 notificationRouter.put("/consent", async (req, res) => {
   const input = parse(consentInput, req.body);

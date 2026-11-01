@@ -66,6 +66,23 @@ describe("retail validation and safe amounts", () => {
   });
 });
 describe("catalog and stock management", () => {
+  it("records a demo opening movement before historical sales without changing quantities", async () => {
+    const recordedAt = new Date("2026-01-01T00:30:00Z");
+    await createProduct(admin, profile(), recordedAt);
+    expect(saved[1]).toMatchObject({ kind: "OPENING", before: 0, after: 10, recordedAt });
+  });
+  it("supports historical checkout through the same day guard and sale/movement transaction", async () => {
+    const soldAt = new Date("2026-01-05T20:00:00Z");
+    const result = await checkout(receptionist, input(), soldAt);
+    expect(FinancialDay.findOneAndUpdate).toHaveBeenCalledWith({ _id: "2026-01-06" }, expect.any(Object), expect.objectContaining({ session }));
+    expect(result.sale.date).toBe("2026-01-06"); expect(result.sale.soldAt).toBe(soldAt.toISOString());
+    expect(saved.find(item => item instanceof StockMovement)).toMatchObject({ recordedAt: soldAt });
+  });
+  it("refuses historical POS on a closed day before stock or receipt writes", async () => {
+    vi.mocked(FinancialDay.findOneAndUpdate).mockResolvedValue(new FinancialDay({ _id: "2026-01-06", closed: true, revision: 5 }));
+    await expect(checkout(receptionist, input(), new Date("2026-01-05T20:00:00Z"))).rejects.toHaveProperty("statusCode", 409);
+    expect(RetailProduct.findOneAndUpdate).not.toHaveBeenCalled(); expect(saved).toHaveLength(0);
+  });
   it("registers a product and its opening movement in the same transaction", async () => {
     const result = await createProduct(admin, profile());
     expect(result.product.stock).toBe(10); expect(saved).toHaveLength(2);

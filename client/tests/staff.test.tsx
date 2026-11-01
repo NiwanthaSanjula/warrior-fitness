@@ -45,6 +45,7 @@ function confirm() { fireEvent.click(within(screen.getByRole("alertdialog")).get
 describe("staff access and navigation", () => {
   it("shows the active Staff Management navigation and real page to Admins", async () => {
     renderWithAuth(<App />, authState("ADMIN", { staff: { ...admin, permissions: [] } }), "/staff");
+    await screen.findByRole("heading", { name: "Staff Management" }, { timeout: 5000 });
     expect(await screen.findByRole("button", { name: "Manage Example Receptionist" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Staff Management" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Staff Management" })).toHaveAttribute("href", "/staff");

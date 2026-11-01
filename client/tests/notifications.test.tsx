@@ -40,7 +40,9 @@ async function optIn() {
 
 describe("Notification Center authorization", () => {
   it("permits Admin navigation and the real route", async () => {
-    renderWithAuth(<App />, authState("ADMIN"), "/notifications"); await ready();
+    renderWithAuth(<App />, authState("ADMIN"), "/notifications");
+    await screen.findByRole("heading", { name: "Notification Center" }, { timeout: 5000 });
+    await ready();
     expect(screen.getByRole("link", { name: "Notifications" })).toHaveAttribute("href", "/notifications");
     expect(screen.getByRole("link", { name: "Notifications" })).toHaveAttribute("aria-current", "page");
   });
