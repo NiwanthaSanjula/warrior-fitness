@@ -1029,7 +1029,9 @@ export default function ReportsPage() {
 
           <p className="text-xs text-gym-muted">
             Reports reflect records stored in Warrior
-            Fitness. Collections are recorded payments,
+            Fitness. Collections here are membership payments;
+            POS collections are available in Retail and combined
+            daily totals in Daily Cash Closing. Collections are
             not net profit or audited bank settlements.
             Active members and receivables are current
             snapshots, not historical balances.

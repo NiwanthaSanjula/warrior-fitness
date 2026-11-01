@@ -24,6 +24,7 @@ export interface ExpenseList {
 export interface DayTotals {
   collections: Record<FinancialMethod, number>; expenses: Record<FinancialMethod, number>;
   paymentCount: number; expenseCount: number;
+  membershipCollections?: Record<FinancialMethod, number>; retailCollections?: Record<FinancialMethod, number>; retailSaleCount?: number;
 }
 export interface ClosingInput {
   requestId: string; date: string; openingCashLkr: number; actualCashLkr: number;

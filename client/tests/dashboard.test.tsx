@@ -43,7 +43,7 @@ describe("API-backed daily operations dashboard", () => {
     await settled();
     expect(metric("Active memberships").getByText("142")).toBeInTheDocument();
     expect(metric("Today's collections").getByText("LKR 12,500")).toBeInTheDocument();
-    expect(metric("Today's collections").getByText("3 payments received today")).toBeInTheDocument();
+    expect(metric("Today's collections").getByText("3 membership payments received today · POS collections in Retail")).toBeInTheDocument();
     expect(metric("Today's attendance").getByText("31")).toBeInTheDocument();
     expect(metric("Outstanding balance").getByText("LKR 48,000")).toBeInTheDocument();
     expect(metric("Overdue balance").getByText("LKR 18,000")).toBeInTheDocument();

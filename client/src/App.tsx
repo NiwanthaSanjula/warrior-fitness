@@ -39,6 +39,11 @@ import NotificationsPage from "./pages/NotificationsPage";
 import EquipmentPage from "./pages/EquipmentPage";
 import EquipmentDetailPage from "./pages/EquipmentDetailPage";
 import EquipmentMaintenancePage from "./pages/EquipmentMaintenancePage";
+import RetailCheckoutPage from "./pages/RetailCheckoutPage";
+import RetailProductsPage from "./pages/RetailProductsPage";
+import RetailSalesPage from "./pages/RetailSalesPage";
+import RetailReceiptPage from "./pages/RetailReceiptPage";
+import RetailDashboardPage from "./pages/RetailDashboardPage";
 
 
 function ModulePlaceholder({
@@ -144,10 +149,16 @@ export default function App() {
             element={<PermissionRoute permissions={["follow-ups.read"]}><MemberFollowUpPage /></PermissionRoute>}
           />
 
-          {/* Admin-only routes */}
+          {/* Equipment and retail operational routes */}
+          <Route path="/retail/checkout" element={<PermissionRoute permissions={["retail.read", "retail.checkout"]}><RetailCheckoutPage /></PermissionRoute>} />
+          <Route path="/retail/products" element={<PermissionRoute permissions={["retail.read"]}><RetailProductsPage /></PermissionRoute>} />
+          <Route path="/retail/sales" element={<PermissionRoute permissions={["retail.sales.read"]}><RetailSalesPage /></PermissionRoute>} />
+          <Route path="/retail/sales/:id" element={<PermissionRoute permissions={["retail.sales.read"]}><RetailReceiptPage /></PermissionRoute>} />
           <Route path="/equipment" element={<PermissionRoute permissions={["equipment.read"]}><EquipmentPage /></PermissionRoute>} />
           <Route path="/equipment/:id" element={<PermissionRoute permissions={["equipment.read"]}><EquipmentDetailPage /></PermissionRoute>} />
+          {/* Admin-only routes */}
           <Route element={<AdminOnlyRoute />}>
+            <Route path="/retail" element={<PermissionRoute permissions={["retail.manage"]}><RetailDashboardPage /></PermissionRoute>} />
             <Route path="/equipment/maintenance" element={<PermissionRoute permissions={["equipment.manage"]}><EquipmentMaintenancePage /></PermissionRoute>} />
             <Route path="/notifications" element={<PermissionRoute permissions={["settings.manage"]}><NotificationsPage /></PermissionRoute>} />
             <Route path="/staff" element={<PermissionRoute permissions={["staff.manage"]}><StaffManagementPage /></PermissionRoute>} />

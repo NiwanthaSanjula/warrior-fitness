@@ -143,7 +143,10 @@ describe("daily cash closing", () => {
     fillClosing();
     expect(screen.getByText("LKR 11,000")).toBeInTheDocument();
     expect(screen.getByText("Shortage")).toBeInTheDocument(); expect(screen.getByText("LKR 200")).toBeInTheDocument();
-    expect(screen.getByText("LKR 50,000")).toBeInTheDocument(); expect(screen.getByText("LKR 25,000")).toBeInTheDocument();
+    // Membership and combined columns intentionally repeat legacy amounts;
+    // POS contributes zero in this pre-existing membership-only scenario.
+    expect(within(screen.getByRole("row", { name: /Bank Transfer/ })).getAllByRole("cell").map(cell => cell.textContent)).toEqual(["LKR 50,000", "LKR 0", "LKR 50,000", "LKR 9,000"]);
+    expect(within(screen.getByRole("row", { name: /Card LKR/ })).getAllByRole("cell").map(cell => cell.textContent)).toEqual(["LKR 25,000", "LKR 0", "LKR 25,000", "LKR 0"]);
     expect(cashPreview("", "", dayFixture.totals)).toEqual({ expected: null, variance: null });
   });
   it("requires a discrepancy explanation and explicit finalization confirmation", async () => {

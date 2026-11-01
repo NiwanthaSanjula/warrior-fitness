@@ -24,16 +24,16 @@ export function AmountTile({ label, amount }: { label: string; amount: number | 
 }
 export function MethodTotals({ totals }: { totals: DayTotals }) {
   return <div className="overflow-x-auto"><table aria-label="Collections and expenses by method" className="w-full text-left text-sm">
-    <thead className="text-xs uppercase text-gym-muted"><tr><th className="p-3">Method</th><th className="p-3">Collections</th><th className="p-3">Expenses</th></tr></thead>
-    <tbody>{(Object.keys(methodLabels) as (keyof typeof methodLabels)[]).map((method) => <tr key={method} className="border-t border-white/10"><th className="p-3 font-semibold">{methodLabels[method]}</th><td className="whitespace-nowrap p-3">{formatLkr(totals.collections[method])}</td><td className="whitespace-nowrap p-3">{formatLkr(totals.expenses[method])}</td></tr>)}</tbody>
-  </table><p className="mt-3 text-xs text-gym-muted">{totals.paymentCount} payments · {totals.expenseCount} expenses. Bank Transfer and Card are shown separately and do not enter physical cash reconciliation.</p></div>;
+    <thead className="text-xs uppercase text-gym-muted"><tr><th className="p-3">Method</th><th className="p-3">Membership collections</th><th className="p-3">POS collections</th><th className="p-3">Combined collections</th><th className="p-3">Expenses</th></tr></thead>
+    <tbody>{(Object.keys(methodLabels) as (keyof typeof methodLabels)[]).map((method) => <tr key={method} className="border-t border-white/10"><th className="p-3 font-semibold">{methodLabels[method]}</th><td className="whitespace-nowrap p-3">{formatLkr((totals.membershipCollections ?? totals.collections)[method])}</td><td className="whitespace-nowrap p-3">{formatLkr(totals.retailCollections?.[method] ?? 0)}</td><td className="whitespace-nowrap p-3">{formatLkr(totals.collections[method])}</td><td className="whitespace-nowrap p-3">{formatLkr(totals.expenses[method])}</td></tr>)}</tbody>
+  </table><p className="mt-3 text-xs text-gym-muted">{totals.paymentCount} membership payments · {totals.retailSaleCount ?? 0} retail sales · {totals.expenseCount} expenses. Bank Transfer and Card do not enter physical cash reconciliation.</p>{!totals.retailCollections && <p className="mt-2 text-xs text-gym-muted">Legacy membership-only snapshot. Original closing amounts are preserved.</p>}</div>;
 }
 export function ClosingSnapshot({ closing }: { closing: ClosingRecord }) {
   return <section aria-label="Completed closing" className="space-y-5 rounded-2xl border border-emerald-500/25 bg-gym-card p-5 sm:p-6">
     <div><p className="text-xs font-bold uppercase text-emerald-400">Completed · Read-only</p><h2 className="mt-2 text-xl font-black">{formatGymDate(closing.date)}</h2><p className="mt-2 text-sm text-gym-muted">Closed by {closing.closedByName} · {formatFinancialTimestamp(closing.closedAt)} · Asia/Colombo</p></div>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><AmountTile label="Opening cash" amount={closing.openingCashLkr} /><AmountTile label="Expected cash" amount={closing.expectedCashLkr} /><AmountTile label="Actual closing cash" amount={closing.actualCashLkr} /><AmountTile label={closing.varianceLkr < 0 ? "Shortage" : closing.varianceLkr > 0 ? "Overage" : "Balanced"} amount={Math.abs(closing.varianceLkr)} /></div>
     {closing.explanation && <p className="whitespace-pre-wrap break-words rounded-xl bg-white/5 p-4 text-sm">Explanation: {closing.explanation}</p>}
-    <MethodTotals totals={closing.totals} /><p className="text-xs leading-5 text-gym-muted">This stored snapshot cannot be edited or reopened. New payments and expenses for this gym date are blocked.</p>
+    <MethodTotals totals={closing.totals} /><p className="text-xs leading-5 text-gym-muted">This stored snapshot cannot be edited or reopened. New membership payments, POS sales and expenses for this gym date are blocked.</p>
   </section>;
 }
 export function FinancialPagination({ pagination, change }: { pagination: Pagination; change: (page: number) => void }) {

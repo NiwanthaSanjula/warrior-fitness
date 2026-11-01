@@ -1,0 +1,4 @@
+export const RETAIL_CATEGORIES = ["SUPPLEMENTS", "BEVERAGES", "SNACKS", "ACCESSORIES", "MERCHANDISE", "OTHER"] as const;
+export const STOCK_KINDS = ["OPENING", "RESTOCK", "ADJUSTMENT", "SALE"] as const;
+export const MAX_STOCK = 10_000_000;
+export const MAX_SALE_LKR = 1_000_000_000;

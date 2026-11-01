@@ -11,12 +11,14 @@ const labels: Record<(typeof RECEPTIONIST_PERMISSIONS)[number], string> = {
   "attendance.read": "View attendance", "attendance.check-in": "Check in members",
   "attention.read": "View Attention Center", "follow-ups.read": "View follow-up history and due queue", "follow-ups.create": "Record follow-ups",
   "equipment.read": "View equipment and operational history", "equipment.report": "Report equipment faults (also needs equipment viewing)",
+  "retail.read": "View active retail products", "retail.checkout": "Complete retail checkout (also needs product viewing)", "retail.sales.read": "View own retail sales and receipts",
 };
 const groups = [
   ["members", "Members"], ["plans", "Membership plans"], ["memberships", "Memberships"],
   ["invoices", "Invoices"], ["payments", "Payments"], ["attendance", "Attendance"],
   ["attention", "Attention Center"], ["follow-ups", "Follow-ups"],
   ["equipment", "Equipment"],
+  ["retail", "POS & retail"],
 ] as const;
 export function staffPermissionCatalogue() {
   return {

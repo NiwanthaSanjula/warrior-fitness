@@ -5,6 +5,8 @@ export interface MethodAmounts { CASH: number; BANK_TRANSFER: number; CARD: numb
 export interface DayTotals {
   collections: MethodAmounts; expenses: MethodAmounts;
   paymentCount: number; expenseCount: number;
+  // Absent on pre-POS snapshots. Never backfill or recompute historical closings.
+  membershipCollections?: MethodAmounts; retailCollections?: MethodAmounts; retailSaleCount?: number;
 }
 export interface ICashClosing {
   date: string; requestId: string; fingerprint: string; expectedRevision: number;
@@ -18,6 +20,8 @@ const methodSchema = new Schema<MethodAmounts>({
 const totalsSchema = new Schema<DayTotals>({
   collections: { type: methodSchema, required: true }, expenses: { type: methodSchema, required: true },
   paymentCount: { type: Number, required: true }, expenseCount: { type: Number, required: true },
+  membershipCollections: { type: methodSchema, default: undefined }, retailCollections: { type: methodSchema, default: undefined },
+  retailSaleCount: { type: Number, min: 0, validate: Number.isSafeInteger, default: undefined },
 }, { _id: false });
 const schema = new Schema<ICashClosing>({
   date: { type: String, required: true, unique: true, immutable: true },

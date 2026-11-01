@@ -37,7 +37,7 @@ function ClosingForm({ preview, locked, submit }: {
   }
   return <div className="space-y-5">
     <MethodTotals totals={preview.totals} />
-    <p className="rounded-xl border border-orange-500/25 bg-orange-500/5 p-4 text-sm leading-6 text-orange-200">Expected cash = Opening cash + Cash collections − Cash expenses. Record all entries first: finalizing blocks new payments and expenses for this gym date and cannot be undone.</p>
+    <p className="rounded-xl border border-orange-500/25 bg-orange-500/5 p-4 text-sm leading-6 text-orange-200">Expected cash = Opening cash + Membership cash + POS cash − Cash expenses. Record all entries first: finalizing blocks new payments, POS sales and expenses for this gym date and cannot be undone.</p>
     <FinancialNotice message={error} error />
     <form aria-label="Finalize daily closing" onSubmit={handleSubmit}>
       <fieldset disabled={locked} className="space-y-5 disabled:opacity-60">

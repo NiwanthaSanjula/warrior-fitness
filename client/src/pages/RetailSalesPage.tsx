@@ -1,0 +1,23 @@
+import { useCallback, useState } from "react";
+import { Link } from "react-router";
+import { useAuth } from "../auth/auth-context";
+import { hasPermissions } from "../auth/permissions";
+import { retailApi } from "../api/retail.api";
+import { useDashboardResource } from "../hooks/useDashboardResource";
+import { DashboardPanel, EmptyQueue } from "../components/dashboard/DashboardWidgets";
+import { RetailFrame, RetailNotice, RetailPages } from "../components/retail/RetailUI";
+import { methodLabels, type FinancialMethod } from "../types/financial";
+import { retailInput, retailSecondary } from "../utils/retail";
+import { addCalendarDays, formatLkr, todayInColombo } from "../utils/dashboard";
+import { formatFinancialTimestamp } from "../utils/financial";
+export default function RetailSalesPage() {
+  const { staff } = useAuth(), allowed = hasPermissions(staff, "retail.sales.read"), today = todayInColombo();
+  const [draft, setDraft] = useState({ from: addCalendarDays(today, -29), to: today, q: "", method: "" }), [filters, setFilters] = useState(draft), [page, setPage] = useState(1), [revision, setRevision] = useState(0);
+  const load = useCallback((signal: AbortSignal) => retailApi.sales({ ...filters, method: filters.method as FinancialMethod || undefined, page, limit: 12 }, signal), [filters, page]);
+  const resource = useDashboardResource(allowed, `${staff?.id}:${JSON.stringify(filters)}:${page}:${revision}`, load);
+  if (!allowed) return <RetailNotice error message="Retail sales history permission is required." />;
+  return <RetailFrame title="Retail Sales History" description={staff?.role === "ADMIN" ? "Review all retail transactions. Completed sales preserve their original products, prices and payment details." : "Your completed retail transactions and printable receipts. Other cashiers' sales are not available."} tools={<button className={retailSecondary} onClick={() => setRevision(value => value + 1)}>Refresh sales</button>}>
+    <form aria-label="Retail sales filters" className="grid gap-4 rounded-2xl border border-white/10 bg-gym-card p-5 sm:grid-cols-2 xl:grid-cols-5" onSubmit={event => { event.preventDefault(); setFilters(draft); setPage(1); }}><label className="text-sm">Sales from<input required type="date" min="2007-01-01" max={today} value={draft.from} className={retailInput} onChange={event => setDraft({ ...draft, from: event.target.value })} /></label><label className="text-sm">Sales to<input required type="date" min={draft.from} max={today} value={draft.to} className={retailInput} onChange={event => setDraft({ ...draft, to: event.target.value })} /></label><label className="text-sm">Search sales<input maxLength={100} value={draft.q} placeholder="Receipt, product, customer or reference" className={retailInput} onChange={event => setDraft({ ...draft, q: event.target.value })} /></label><label className="text-sm">Sales payment method<select className={retailInput} value={draft.method} onChange={event => setDraft({ ...draft, method: event.target.value })}><option value="">All methods</option>{Object.entries(methodLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><button className={`${retailSecondary} self-end`}>Apply sales filters</button></form>
+    <DashboardPanel title="Completed retail transactions" description="Open a receipt to view the immutable sale snapshot and print it again." resource={resource}>{result => <>{result.data.length ? <div className="overflow-x-auto"><table aria-label="Retail sales records" className="w-full min-w-160 text-left text-sm"><thead className="text-xs uppercase text-gym-muted"><tr>{["Receipt / customer", "Collected", "Method", "Cashier / Colombo time", "Receipt"].map(label => <th className="p-3" key={label}>{label}</th>)}</tr></thead><tbody>{result.data.map(sale => <tr className="border-t border-white/10" key={sale.id}><td className="p-3"><p className="max-w-64 break-all font-bold">{sale.saleNumber}</p><p className="mt-1 text-xs text-gym-muted">{sale.memberName || "Walk-in"}</p></td><td className="whitespace-nowrap p-3 font-bold text-orange-300">{formatLkr(sale.amountLkr)}</td><td className="p-3">{methodLabels[sale.method]}</td><td className="p-3"><p>{sale.cashierName}</p><p className="mt-1 text-xs text-gym-muted">{formatFinancialTimestamp(sale.soldAt)}</p></td><td className="p-3"><Link to={`/retail/sales/${sale.id}`} className="font-bold text-orange-400">View receipt</Link></td></tr>)}</tbody></table></div> : <EmptyQueue>No retail sales match this period.</EmptyQueue>}<RetailPages pagination={result.pagination} label="retail sales" change={setPage} /></>}</DashboardPanel>
+  </RetailFrame>;
+}
