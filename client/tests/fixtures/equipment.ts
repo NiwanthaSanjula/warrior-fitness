@@ -1,0 +1,10 @@
+import type { EquipmentIncident, EquipmentItem, EquipmentWork, InventoryResponse, MaintenanceDashboard } from "../../src/types/equipment";
+export const equipmentFixture: EquipmentItem = {
+  id: "000000000000000000000100", assetId: "GYM-100", name: "Fictional treadmill", category: "CARDIO", brand: "Example Brand", model: "Example Model", serialNumber: "DEMO-ONLY", location: "Cardio zone",
+  purchaseDate: "2020-01-01", purchasePriceLkr: 200000, warrantyExpiry: "2027-01-01", status: "OPERATIONAL", intervalDays: 30, nextServiceDate: "2026-01-15", version: 2,
+};
+export const equipmentPagination = { page: 1, limit: 10, total: 1, totalPages: 1 };
+export const inventoryFixture: InventoryResponse = { success: true, data: [equipmentFixture], pagination: equipmentPagination, statistics: { total: 1, operational: 1, underMaintenance: 0, outOfService: 0, retired: 0 } };
+export const incidentFixture: EquipmentIncident = { id: "000000000000000000000102", equipmentId: equipmentFixture.id, description: "Fictional belt makes a loud noise", severity: "HIGH", status: "OPEN", reporterName: "Example Reporter", reportedAt: "2026-01-15T19:00:00Z", closedAt: null, reviewNotes: "Private safety assessment" };
+export const equipmentWorkFixture: EquipmentWork = { id: "000000000000000000000101", equipmentId: equipmentFixture.id, assetId: equipmentFixture.assetId, equipmentName: equipmentFixture.name, incidentId: incidentFixture.id, title: "Inspect and service belt", kind: "PREVENTIVE", status: "OPEN", plannedDate: "2026-01-15", technician: "Example Technician", provider: "Private service provider", contact: "Private contact", estimatedCostLkr: 5000, notes: "Private instructions", repairNotes: "Private repair notes", createdByName: "Example Admin", createdAt: "2026-01-15T19:00:00Z", startedAt: null, completedAt: null, linkedExpenses: [] };
+export const maintenanceFixture: MaintenanceDashboard = { success: true, asOfDate: "2026-01-15", statistics: { overdue: 1, dueToday: 1, activeWork: 2, openIncidents: 1, unavailable: 1 }, queue: [equipmentFixture], pagination: equipmentPagination };

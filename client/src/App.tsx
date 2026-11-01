@@ -36,6 +36,9 @@ import DailyCashClosingPage from "./pages/DailyCashClosingPage";
 import ClosingHistoryPage from "./pages/ClosingHistoryPage";
 import StaffManagementPage from "./pages/StaffManagementPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import EquipmentPage from "./pages/EquipmentPage";
+import EquipmentDetailPage from "./pages/EquipmentDetailPage";
+import EquipmentMaintenancePage from "./pages/EquipmentMaintenancePage";
 
 
 function ModulePlaceholder({
@@ -142,7 +145,10 @@ export default function App() {
           />
 
           {/* Admin-only routes */}
+          <Route path="/equipment" element={<PermissionRoute permissions={["equipment.read"]}><EquipmentPage /></PermissionRoute>} />
+          <Route path="/equipment/:id" element={<PermissionRoute permissions={["equipment.read"]}><EquipmentDetailPage /></PermissionRoute>} />
           <Route element={<AdminOnlyRoute />}>
+            <Route path="/equipment/maintenance" element={<PermissionRoute permissions={["equipment.manage"]}><EquipmentMaintenancePage /></PermissionRoute>} />
             <Route path="/notifications" element={<PermissionRoute permissions={["settings.manage"]}><NotificationsPage /></PermissionRoute>} />
             <Route path="/staff" element={<PermissionRoute permissions={["staff.manage"]}><StaffManagementPage /></PermissionRoute>} />
             <Route path="/expenses" element={<PermissionRoute permissions={["expenses.manage"]}><ExpenseManagementPage /></PermissionRoute>} />

@@ -6,6 +6,7 @@ import { initializeFinancialModels } from "./modules/financial/financial.service
 import { initializeStaffAdministration } from "./modules/staff/staff.service.js";
 import { initializeNotificationModels } from "./modules/notifications/notification.model.js";
 import { startNotificationScheduler } from "./modules/notifications/notification.scheduler.js";
+import { initializeEquipmentModels } from "./modules/equipment/equipment.model.js";
 
 async function startServer(): Promise<void> {
   try {
@@ -13,6 +14,7 @@ async function startServer(): Promise<void> {
     await initializeFinancialModels();
     await initializeStaffAdministration();
     await initializeNotificationModels();
+    await initializeEquipmentModels();
 
     const server = app.listen(env.PORT, "127.0.0.1", () => {
       const scheduler = startNotificationScheduler();

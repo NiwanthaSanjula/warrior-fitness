@@ -2,12 +2,14 @@
 import {
   Navigate,
   Outlet,
+  useLocation,
 } from "react-router";
 import type { ReactNode } from "react";
 
 import { Dumbbell } from "lucide-react";
 import { useAuth } from "../auth/auth-context";
 import { hasPermissions, type Permission } from "../auth/permissions";
+import { equipmentLoginReturn } from "../utils/equipment";
 
 function LoadingScreen() {
   return (
@@ -27,13 +29,14 @@ function LoadingScreen() {
 // Allow only authenticated staff
 export function ProtectedRoute() {
   const { staff, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (!staff) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={/^\/equipment(?:\/|$)/.test(location.pathname) ? { equipmentReturnTo: location.pathname } : undefined} />;
   }
 
   return <Outlet />;
@@ -42,13 +45,14 @@ export function ProtectedRoute() {
 // Login page is only for unauthenticated users
 export function PublicOnlyRoute() {
   const { staff, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (staff) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={equipmentLoginReturn(location.state)} replace />;
   }
 
   return <Outlet />;

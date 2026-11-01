@@ -28,6 +28,7 @@ import {
   History,
   ChevronDown,
   ShieldCheck,
+  Wrench,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -107,9 +108,13 @@ const menuItems: MenuEntry[] = [
   },
   { label: "Staff Management", path: "/staff", icon: ShieldCheck, adminOnly: true, permissions: ["staff.manage"] },
   { label: "Notifications", path: "/notifications", icon: MessageSquareText, adminOnly: true, permissions: ["settings.manage"] },
+  { label: "Equipment", icon: Dumbbell, children: [
+    { label: "Equipment Inventory", path: "/equipment", icon: Dumbbell, permissions: ["equipment.read"] },
+    { label: "Maintenance", path: "/equipment/maintenance", icon: Wrench, adminOnly: true, permissions: ["equipment.manage"] },
+  ] },
 ];
 
-function FinanceNavigation({ item, active, locationKey, onNavigate }: {
+function GroupNavigation({ item, active, locationKey, onNavigate }: {
   item: MenuGroup;
   active: boolean;
   locationKey: string;
@@ -149,13 +154,14 @@ function FinanceNavigation({ item, active, locationKey, onNavigate }: {
         <span>{item.label}</span>
         <ChevronDown aria-hidden="true" size={17} className={`ml-auto transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`} />
       </button>
-      <ul id={id} aria-label="Finance pages" hidden={!expanded} className="ml-6 mt-1 space-y-1 border-l border-white/10 pl-3">
+      <ul id={id} aria-label={`${item.label} pages`} hidden={!expanded} className="ml-6 mt-1 space-y-1 border-l border-white/10 pl-3">
         {item.children.map((child) => {
           const ChildIcon = child.icon;
           return (
             <li key={child.path}>
               <NavLink
                 to={child.path}
+                end={child.path === "/equipment"}
                 onClick={onNavigate}
                 className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-gym-orange ${
                   isActive ? "bg-gym-orange text-white shadow-lg shadow-orange-600/10" : "text-zinc-400 hover:bg-white/5 hover:text-white"
@@ -288,7 +294,7 @@ export default function AppLayout() {
           {visibleMenu.map((item) => {
             if ("children" in item) {
               const active = item.children.some((child) => matchPath({ path: child.path, end: false }, location.pathname));
-              return <FinanceNavigation key={item.label} item={item} active={active} locationKey={location.key} onNavigate={closeNavigation} />;
+              return <GroupNavigation key={item.label} item={item} active={active} locationKey={location.key} onNavigate={closeNavigation} />;
             }
             const Icon = item.icon;
 

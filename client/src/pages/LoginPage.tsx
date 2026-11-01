@@ -2,7 +2,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { equipmentLoginReturn } from "../utils/equipment";
 
 import {
   ArrowRight,
@@ -18,6 +19,7 @@ import { getApiErrorMessage } from "../api/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -42,7 +44,7 @@ export default function LoginPage() {
     try {
       await login(email.trim(), password);
 
-      navigate("/dashboard", {
+      navigate(equipmentLoginReturn(location.state), {
         replace: true,
       });
     } catch (err) {

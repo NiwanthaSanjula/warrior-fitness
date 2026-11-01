@@ -1,0 +1,6 @@
+export const EQUIPMENT_STATUSES = ["OPERATIONAL", "UNDER_MAINTENANCE", "OUT_OF_SERVICE", "RETIRED"] as const;
+export const EQUIPMENT_CATEGORIES = ["CARDIO", "STRENGTH", "FREE_WEIGHTS", "FUNCTIONAL", "ACCESSORIES", "OTHER"] as const;
+export const SEVERITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
+export const INCIDENT_STATUSES = ["OPEN", "ACKNOWLEDGED", "RESOLVED", "DISMISSED"] as const;
+export const WORK_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
+export const WORK_KINDS = ["PREVENTIVE", "REPAIR"] as const;
