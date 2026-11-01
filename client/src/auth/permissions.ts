@@ -7,7 +7,8 @@ export type Permission =
   | "attendance.read" | "attendance.check-in"
   | "attention.read" | "follow-ups.read" | "follow-ups.create"
   | "staff.manage" | "reports.read" | "settings.manage"
-  | "expenses.manage" | "cash-closings.manage";
+  | "expenses.manage" | "cash-closings.manage"
+  | "equipment.read" | "equipment.report" | "equipment.manage";
 
 export function hasPermissions(
   staff: { role: string; permissions: readonly Permission[] } | null,

@@ -9,11 +9,13 @@ export const RECEPTIONIST_PERMISSIONS = [
   "invoices.read", "invoices.create", "payments.read", "payments.record",
   "attendance.read", "attendance.check-in",
   "attention.read", "follow-ups.read", "follow-ups.create",
+  "equipment.read", "equipment.report",
 ] as const;
 
 export const ADMIN_ONLY_PERMISSIONS = [
   "members.status", "plans.manage", "staff.manage", "reports.read", "settings.manage",
   "expenses.manage", "cash-closings.manage",
+  "equipment.manage",
 ] as const;
 
 export const PERMISSIONS = [...RECEPTIONIST_PERMISSIONS, ...ADMIN_ONLY_PERMISSIONS] as const;

@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 
 import { env } from "./config/env.js";
+import { equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { healthRouter } from "./modules/health/health.routes.js";
 import { notFound } from "./middlewares/notFound.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
@@ -61,6 +62,7 @@ app.use("/api/reports", reportsRouter);
 app.use("/api/expenses", expenseRouter);
 app.use("/api/cash-closings", cashClosingRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/equipment", equipmentRouter);
 
 // Error handling (must come after routes)
 app.use(notFound);
