@@ -19,6 +19,7 @@ import {
   Menu,
   Settings,
   Users,
+  UserRoundCheck,
   Wallet,
   X,
   BellRing,
@@ -35,9 +36,10 @@ import {
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
+import gymLogo from "../assets/LOGO.png";
 
 import { useAuth } from "../auth/auth-context";
-import { hasPermissions, type Permission } from "../auth/permissions";
+import { canUseFrontDesk, hasPermissions, type Permission } from "../auth/permissions";
 
 interface MenuItem {
   label: string;
@@ -45,6 +47,7 @@ interface MenuItem {
   icon: LucideIcon;
   adminOnly?: boolean;
   permissions?: Permission[];
+  frontDesk?: boolean;
 }
 
 interface MenuGroup {
@@ -61,18 +64,14 @@ const menuItems: MenuEntry[] = [
     path: "/dashboard",
     icon: LayoutDashboard,
   },
-  {
-    label: "Manage Members",
-    permissions: ["members.read"],
-    path: "/members",
-    icon: Users,
-  },
-  {
-    label: "Membership Plans",
-    permissions: ["plans.read"],
-    path: "/plans",
-    icon: CreditCard,
-  },
+  { label: "Front Desk", path: "/front-desk", icon: UserRoundCheck, frontDesk: true },
+  { label: "Members", icon: Users, children: [
+    { label: "Directory", path: "/members", icon: Users, permissions: ["members.read"] },
+    { label: "Plans", path: "/plans", icon: CreditCard, permissions: ["plans.read"] },
+    { label: "Visit history", path: "/attendance", icon: CalendarDays, permissions: ["attendance.read"] },
+    { label: "Attention Center", path: "/attention", icon: BellRing, permissions: ["attention.read"] },
+    { label: "Due follow-ups", path: "/attention/follow-ups/due", icon: BellRing, permissions: ["follow-ups.read"] },
+  ] },
   {
     label: "Finance",
     icon: Wallet,
@@ -91,37 +90,15 @@ const menuItems: MenuEntry[] = [
       { label: "Retail Dashboard", path: "/retail", icon: BarChart3, adminOnly: true, permissions: ["retail.manage"] },
     ],
   },
-  {
-    label: "Attendance",
-    permissions: ["attendance.read"],
-    path: "/attendance",
-    icon: CalendarDays,
-  },
-  {
-  label: "Attention Center",
-    permissions: ["attention.read"],
-    path: "/attention",
-    icon: BellRing,
-  },
-  {
-    label: "Reports",
-    permissions: ["reports.read"],
-    path: "/reports",
-    icon: BarChart3,
-    adminOnly: true,
-  },
-  {
-    label: "Settings",
-    permissions: ["settings.manage"],
-    path: "/settings",
-    icon: Settings,
-    adminOnly: true,
-  },
-  { label: "Staff Management", path: "/staff", icon: ShieldCheck, adminOnly: true, permissions: ["staff.manage"] },
-  { label: "Notifications", path: "/notifications", icon: MessageSquareText, adminOnly: true, permissions: ["settings.manage"] },
   { label: "Equipment", icon: Dumbbell, children: [
     { label: "Equipment Inventory", path: "/equipment", icon: Dumbbell, permissions: ["equipment.read"] },
     { label: "Maintenance", path: "/equipment/maintenance", icon: Wrench, adminOnly: true, permissions: ["equipment.manage"] },
+  ] },
+  { label: "Administration", icon: Settings, children: [
+    { label: "Staff Management", path: "/staff", icon: ShieldCheck, adminOnly: true, permissions: ["staff.manage"] },
+    { label: "Notifications", path: "/notifications", icon: MessageSquareText, adminOnly: true, permissions: ["settings.manage"] },
+    { label: "Reports", path: "/reports", icon: BarChart3, adminOnly: true, permissions: ["reports.read"] },
+    { label: "Settings", path: "/settings", icon: Settings, adminOnly: true, permissions: ["settings.manage"] },
   ] },
 ];
 
@@ -172,7 +149,7 @@ function GroupNavigation({ item, active, locationKey, onNavigate }: {
             <li key={child.path}>
               <NavLink
                 to={child.path}
-                end={child.path === "/equipment" || child.path === "/retail"}
+                end={["/equipment", "/retail", "/attention"].includes(child.path)}
                 onClick={onNavigate}
                 className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-gym-orange ${
                   isActive ? "bg-gym-orange text-white shadow-lg shadow-orange-600/10" : "text-zinc-400 hover:bg-white/5 hover:text-white"
@@ -230,7 +207,7 @@ export default function AppLayout() {
 
   const canSeeItem = (item: MenuItem) =>
     (!item.adminOnly || staff?.role === "ADMIN") &&
-    hasPermissions(staff, ...(item.permissions ?? []));
+    (item.frontDesk ? canUseFrontDesk(staff) : hasPermissions(staff, ...(item.permissions ?? [])));
   const visibleMenu = menuItems.flatMap<MenuEntry>((item) => {
     if ("children" in item) {
       const children = item.children.filter(canSeeItem);
@@ -241,6 +218,8 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gym-bg text-white lg:flex">
+
+      <a href="#main-content" className="fixed left-4 top-4 z-60 -translate-y-24 rounded-xl bg-gym-orange px-5 py-3 text-sm font-bold focus:translate-y-0">Skip to page content</a>
 
       {/* Mobile background overlay */}
       {menuOpen && (
@@ -261,18 +240,16 @@ export default function AppLayout() {
             closeNavigation();
           }
         }}
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-gym-sidebar transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-white/10 bg-gym-sidebar transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           menuOpen
             ? "visible translate-x-0"
             : "invisible -translate-x-full lg:visible"
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-7">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-gym-orange p-3">
-              <Dumbbell size={26} />
-            </div>
+            <img src={gymLogo} alt="" className="h-16 w-12 shrink-0 object-contain" />
 
             <div className="leading-tight">
               <h1 className="text-xl font-black italic text-red-500">
@@ -336,7 +313,7 @@ export default function AppLayout() {
           </p>
 
           <p className="mt-1 text-xs text-zinc-600">
-            Management System · MVP
+            Gym Operations Platform
           </p>
         </div>
       </aside>
@@ -345,9 +322,9 @@ export default function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
 
         {/* Header */}
-        <header className="sticky top-0 z-30 flex min-h-22 items-center justify-between gap-4 border-b border-white/10 bg-[#141416] px-5 py-4 lg:px-9">
+        <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-4 border-b border-white/10 bg-[#141416] px-5 py-3 lg:px-8">
 
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               ref={navigationToggle}
               type="button"
@@ -360,19 +337,17 @@ export default function AppLayout() {
               <Menu size={24} />
             </button>
 
-            <div>
-              <h2 className="text-sm font-black uppercase sm:text-lg">
-                WELCOME BACK,{" "}
-                <span className="text-gym-orange">
+            <div className="min-w-0">
+              <p className="break-words text-sm font-semibold">
+                <span className="text-zinc-200">
                   {staff?.fullName}
                 </span>
-              </h2>
+              </p>
 
               <p className="mt-1 text-xs text-gym-muted">
                 {staff?.role === "ADMIN"
                   ? "Administrator"
-                  : "Receptionist"}{" "}
-                Portal
+                  : "Receptionist"}
               </p>
             </div>
           </div>
@@ -402,7 +377,7 @@ export default function AppLayout() {
         )}
 
         {/* Route content */}
-        <main className="flex-1 p-5 lg:p-9">
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none sm:p-5 lg:p-9">
           <Outlet />
         </main>
       </div>

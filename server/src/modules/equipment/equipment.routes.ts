@@ -5,6 +5,7 @@ import { requirePermission } from "../../middlewares/permission.middleware.js";
 import { AppError } from "../../utils/AppError.js";
 import { equipmentHistory, getEquipment, listEquipment, listIncidents, listWorkOrders, maintenanceDashboard } from "./equipment.service.js";
 import { assignWork, createEquipment, createWork, linkExpense, reportIncident, reviewIncident, setEquipmentStatus, transitionWork, updateEquipment } from "./equipment.mutations.js";
+import { getEquipmentAlerts } from "./equipment.alerts.js";
 import { assignInput, createEquipmentSchema, equipmentId, expenseLinkInput, historyQuery, incidentInput, incidentQuery, inventoryQuery, maintenanceQuery, reviewInput, statusInput, updateEquipmentSchema, workActionInput, workInput, workQuery } from "./equipment.validation.js";
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
@@ -15,6 +16,7 @@ export const equipmentRouter = Router(); equipmentRouter.use(requireAuth);
 const read = requirePermission("equipment.read"), manage = [requireRole("ADMIN"), requirePermission("equipment.manage")];
 equipmentRouter.get("/", read, async (req, res) => res.json({ success: true, ...await listEquipment(req.staff!, parse(inventoryQuery, req.query)) }));
 equipmentRouter.get("/maintenance", ...manage, async (req, res) => res.json({ success: true, ...await maintenanceDashboard(req.staff!, parse(maintenanceQuery, req.query)) }));
+equipmentRouter.get("/alerts", ...manage, async (req, res) => res.json({ success: true, ...await getEquipmentAlerts(req.staff!) }));
 equipmentRouter.get("/work-orders", ...manage, async (req, res) => res.json({ success: true, ...await listWorkOrders(req.staff!, parse(workQuery, req.query)) }));
 equipmentRouter.get("/incidents", ...manage, async (req, res) => res.json({ success: true, ...await listIncidents(req.staff!, parse(incidentQuery, req.query)) }));
 equipmentRouter.get("/:id", read, async (req, res) => res.json({ success: true, equipment: await getEquipment(req.staff!, parse(equipmentId, req.params.id)) }));

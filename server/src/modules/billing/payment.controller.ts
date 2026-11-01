@@ -62,6 +62,141 @@ function isSamePaymentRequest(
   );
 }
 
+// Shared transaction for HTTP and the isolated demo importer. HTTP callers
+// always capture server time; timestamps are never accepted from request bodies.
+export async function recordPaymentLedger(input: PaymentInput, actor: { id: string }, receivedAt = new Date()) {
+  const { invoiceId, amountLkr, method, requestId } = input;
+  return financialTransaction(async (session) => {
+    // The same request ID must not record
+    // money more than once.
+    const previousPayment =
+      await Payment.findOne({
+        requestId,
+      }).session(session);
+
+    if (previousPayment) {
+      if (
+        !isSamePaymentRequest(
+          previousPayment,
+          input
+        )
+      ) {
+        throw new PaymentHttpError(
+          409,
+          "This request ID belongs to another payment"
+        );
+      }
+
+      const existingInvoice =
+        await Invoice.findById(
+          previousPayment.invoice
+        ).session(session);
+
+      if (!existingInvoice) {
+        throw new PaymentHttpError(
+          409,
+          "Previously recorded invoice was not found"
+        );
+      }
+
+      return {
+        payment: previousPayment,
+        invoice: existingInvoice,
+        replayed: true,
+      };
+    }
+
+    // Replays above remain valid after closing. New money writes share the
+    // closing/expense day guard inside this SAME invoice/payment transaction.
+    await lockOpenFinancialDay(todayInColombo(receivedAt), session);
+
+    // Load the invoice inside the transaction.
+    const invoice = await Invoice.findById(
+      invoiceId
+    ).session(session);
+
+    if (!invoice) {
+      throw new PaymentHttpError(
+        404,
+        "Invoice not found"
+      );
+    }
+
+    const outstanding =
+      invoice.totalLkr - invoice.paidLkr;
+
+    if (amountLkr > outstanding) {
+      throw new PaymentHttpError(
+        409,
+        `Payment exceeds the outstanding balance of LKR ${outstanding}`
+      );
+    }
+
+    // Atomic conditional increment.
+    // This guards against accepting an amount
+    // that no longer fits the invoice balance.
+    const updatedInvoice =
+      await Invoice.findOneAndUpdate(
+        {
+          _id: invoice._id,
+          paidLkr: {
+            $lte: invoice.totalLkr - amountLkr,
+          },
+        },
+        {
+          $inc: {
+            paidLkr: amountLkr,
+          },
+        },
+        {
+          new: true,
+          session,
+        }
+      );
+
+    if (!updatedInvoice) {
+      throw new PaymentHttpError(
+        409,
+        "Invoice balance changed. Refresh the invoice before recording payment."
+      );
+    }
+
+    // Generate a unique payment reference.
+    const paymentId =
+      new mongoose.Types.ObjectId();
+
+    const payment = new Payment({
+      _id: paymentId,
+
+      paymentNumber:
+        `WF-PAY-${paymentId.toString().toUpperCase()}`,
+
+      requestId,
+
+      invoice: invoice._id,
+      member: invoice.member,
+
+      amountLkr,
+      method,
+
+      reference: input.reference ?? "",
+      notes: input.notes ?? "",
+
+      receivedBy: actor.id,
+      receivedAt,
+    });
+
+    // Both writes use the SAME transaction.
+    await payment.save({ session });
+
+    return {
+      payment,
+      invoice: updatedInvoice,
+      replayed: false,
+    };
+  });
+}
+
 // POST /api/payments
 export const recordPayment: RequestHandler = async (
   req,
@@ -92,149 +227,14 @@ export const recordPayment: RequestHandler = async (
   }
 
   const input = parsed.data;
+  const { requestId } = input;
   // One server timestamp ties the ledger entry to exactly the guarded gym day,
   // including across transaction retries or Colombo midnight.
   const receivedAt = new Date();
 
-  const {
-    invoiceId,
-    amountLkr,
-    method,
-    requestId,
-  } = input;
 
   try {
-    const result = await financialTransaction(
-      async (session) => {
-        // The same request ID must not record
-        // money more than once.
-        const previousPayment =
-          await Payment.findOne({
-            requestId,
-          }).session(session);
-
-        if (previousPayment) {
-          if (
-            !isSamePaymentRequest(
-              previousPayment,
-              input
-            )
-          ) {
-            throw new PaymentHttpError(
-              409,
-              "This request ID belongs to another payment"
-            );
-          }
-
-          const existingInvoice =
-            await Invoice.findById(
-              previousPayment.invoice
-            ).session(session);
-
-          if (!existingInvoice) {
-            throw new PaymentHttpError(
-              409,
-              "Previously recorded invoice was not found"
-            );
-          }
-
-          return {
-            payment: previousPayment,
-            invoice: existingInvoice,
-            replayed: true,
-          };
-        }
-
-        // Replays above remain valid after closing. New money writes share the
-        // closing/expense day guard inside this SAME invoice/payment transaction.
-        await lockOpenFinancialDay(todayInColombo(receivedAt), session);
-
-        // Load the invoice inside the transaction.
-        const invoice = await Invoice.findById(
-          invoiceId
-        ).session(session);
-
-        if (!invoice) {
-          throw new PaymentHttpError(
-            404,
-            "Invoice not found"
-          );
-        }
-
-        const outstanding =
-          invoice.totalLkr - invoice.paidLkr;
-
-        if (amountLkr > outstanding) {
-          throw new PaymentHttpError(
-            409,
-            `Payment exceeds the outstanding balance of LKR ${outstanding}`
-          );
-        }
-
-        // Atomic conditional increment.
-        // This guards against accepting an amount
-        // that no longer fits the invoice balance.
-        const updatedInvoice =
-          await Invoice.findOneAndUpdate(
-            {
-              _id: invoice._id,
-              paidLkr: {
-                $lte: invoice.totalLkr - amountLkr,
-              },
-            },
-            {
-              $inc: {
-                paidLkr: amountLkr,
-              },
-            },
-            {
-              new: true,
-              session,
-            }
-          );
-
-        if (!updatedInvoice) {
-          throw new PaymentHttpError(
-            409,
-            "Invoice balance changed. Refresh the invoice before recording payment."
-          );
-        }
-
-        // Generate a unique payment reference.
-        const paymentId =
-          new mongoose.Types.ObjectId();
-
-        const payment = new Payment({
-          _id: paymentId,
-
-          paymentNumber:
-            `WF-PAY-${paymentId.toString().toUpperCase()}`,
-
-          requestId,
-
-          invoice: invoice._id,
-          member: invoice.member,
-
-          amountLkr,
-          method,
-
-          reference: input.reference ?? "",
-          notes: input.notes ?? "",
-
-          receivedBy: req.staff!.id,
-          receivedAt,
-        });
-
-        // Both writes use the SAME transaction.
-        await payment.save({ session });
-
-        return {
-          payment,
-          invoice: updatedInvoice,
-          replayed: false,
-        };
-      }
-    );
+    const result = await recordPaymentLedger(input, req.staff, receivedAt);
 
     res.status(result.replayed ? 200 : 201).json({
       success: true,

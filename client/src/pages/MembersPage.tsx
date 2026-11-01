@@ -9,7 +9,6 @@ import {
   RefreshCw,
   Search,
   SearchX,
-  UsersRound,
 } from "lucide-react";
 import { Link } from "react-router";
 import PermissionGate from "../components/PermissionGate";
@@ -151,21 +150,7 @@ export default function MembersPage() {
       {/* Page heading */}
       <section className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.25em] text-gym-orange">
-            Member Operations
-          </p>
-
-          <h1 className="text-3xl font-black uppercase italic tracking-tight text-white sm:text-4xl">
-            Manage{" "}
-            <span className="text-gym-orange">
-              Members
-            </span>
-          </h1>
-
-          <p className="mt-3 text-sm text-gym-muted">
-            Browse registered members, search records
-            and monitor profile status.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Members</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -193,33 +178,6 @@ export default function MembersPage() {
         </div>
       </section>
 
-      {/* Directory summary */}
-      <section className="rounded-2xl border border-white/10 bg-gym-card p-5">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-orange-500/10 p-3">
-            <UsersRound
-              size={25}
-              className="text-gym-orange"
-            />
-          </div>
-
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-gym-muted">
-              Matching Member Profiles
-            </p>
-
-            <p
-              className="mt-1 text-3xl font-black text-white"
-              aria-live="polite"
-            >
-              {loading || error
-                ? "—"
-                : total.toLocaleString("en-LK")}
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Main directory card */}
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
 
@@ -228,14 +186,7 @@ export default function MembersPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
             <div>
-              <h2 className="text-lg font-extrabold text-white">
-                Member Directory
-              </h2>
-
-              <p className="mt-1 text-xs text-gym-muted">
-                Search using a name, phone number
-                or member ID.
-              </p>
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-white">Directory <span aria-label="Matching member profiles" aria-live="polite" className="rounded-md bg-white/5 px-2 py-1 text-xs text-gym-muted">{loading || error ? "—" : total.toLocaleString("en-LK")}</span></h2>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -261,7 +212,7 @@ export default function MembersPage() {
                   onChange={(event) =>
                     setSearchInput(event.target.value)
                   }
-                  placeholder="Search members..."
+                  placeholder="Name, phone or member ID"
                   className="w-full rounded-xl border border-white/10 bg-gym-bg py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-gym-orange"
                 />
               </div>

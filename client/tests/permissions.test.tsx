@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AppLayout from "../src/components/AppLayout";
 import MembersPage from "../src/pages/MembersPage";
@@ -36,8 +36,9 @@ describe("frontend permission contract and real action visibility", () => {
 
   it("shows only permitted operational navigation for a custom Receptionist", () => {
     renderWithAuth(<AppLayout />, authState("RECEPTIONIST", { staff: { ...receptionist, permissions: ["members.read"] } }));
-    expect(screen.getByRole("link", { name: "Manage Members" })).toBeInTheDocument();
-    for (const name of ["Payments & Invoices", "Attendance", "Attention Center", "Membership Plans", "Reports", "Settings"]) {
+    fireEvent.click(screen.getByRole("button", { name: "Members" }));
+    expect(screen.getByRole("link", { name: "Directory" })).toBeInTheDocument();
+    for (const name of ["Payments & Invoices", "Visit history", "Attention Center", "Plans", "Reports", "Settings"]) {
       expect(screen.queryByRole("link", { name })).not.toBeInTheDocument();
     }
     expect(screen.queryByRole("button", { name: "Finance" })).not.toBeInTheDocument();

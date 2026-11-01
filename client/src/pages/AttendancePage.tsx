@@ -1,93 +1,21 @@
-
-import { useEffect, useState } from "react";
-import { useAuth } from "../auth/auth-context";
-import { hasPermissions } from "../auth/permissions";
-import PermissionGate from "../components/PermissionGate";
-import type { FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router";
-
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw,
-  Search,
-  UserRoundCheck,
-  Users,
-} from "lucide-react";
-
+import { ChevronLeft, ChevronRight, RefreshCw, UserRoundCheck } from "lucide-react";
+import { useAuth } from "../auth/auth-context";
+import { canUseFrontDesk, hasPermissions } from "../auth/permissions";
 import { attendanceApi } from "../api/attendance.api";
-import { membershipsApi } from "../api/memberships.api";
 import { getApiErrorMessage } from "../api/api";
-
-import type {
-  AttendanceMember,
-  AttendanceSummary,
-  DailyAttendanceResponse,
-  CheckInResponse,
-} from "../types/attendance";
-
-import type {
-  MembershipSummary,
-} from "../types/membership";
+import { DashboardChart } from "../components/dashboard/DashboardCharts";
+import { todayInColombo, formatGymDate as formatDate } from "../utils/dashboard";
+import type { AttendanceSummary, DailyAttendanceResponse } from "../types/attendance";
 
 const PAGE_SIZE = 10;
-
-function todayInColombo(): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Colombo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-
-  const part = (type: string) =>
-    parts.find((item) => item.type === type)?.value ?? "";
-
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
-function formatDate(date: string): string {
-  return new Intl.DateTimeFormat("en-LK", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00.000Z`));
-}
-
 function formatTime(value: string): string {
-  return new Intl.DateTimeFormat("en-LK", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Colombo",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-LK", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Colombo" }).format(new Date(value));
 }
-
-function StatusBadge({ status }: { status: string }) {
-  const style =
-    status === "ACTIVE"
-      ? "bg-emerald-500/10 text-emerald-400"
-      : status === "EXPIRED"
-        ? "bg-red-500/10 text-red-400"
-        : "bg-orange-500/10 text-orange-400";
-
-  return (
-    <span
-      className={`rounded-full px-3 py-1.5 text-xs font-bold ${style}`}
-    >
-      {status.replaceAll("_", " ")}
-    </span>
-  );
-}
-
 export default function AttendancePage() {
   const { staff } = useAuth();
-  const canCheckIn = hasPermissions(staff, "attendance.check-in", "memberships.read");
   const today = todayInColombo();
-
   // Reporting
   const [date, setDate] = useState(today);
   const [dailySearchInput, setDailySearchInput] =
@@ -108,52 +36,7 @@ export default function AttendancePage() {
     message: string;
   } | null>(null);
 
-  // Member search
-  const [memberQuery, setMemberQuery] = useState("");
-  const [memberTerm, setMemberTerm] = useState("");
-  const [searchVersion, setSearchVersion] = useState(0);
-  const [searchInputError, setSearchInputError] =
-    useState("");
-
-  const [searchLoaded, setSearchLoaded] = useState<{
-    key: string;
-    members: AttendanceMember[];
-  } | null>(null);
-
-  const [searchFailure, setSearchFailure] = useState<{
-    key: string;
-    message: string;
-  } | null>(null);
-
-  // Selected member
-  const [selectedMember, setSelectedMember] =
-    useState<AttendanceMember | null>(null);
-
-  const [eligibilityLoaded, setEligibilityLoaded] =
-    useState<{
-      memberId: string;
-      summary: MembershipSummary;
-    } | null>(null);
-
-  const [eligibilityFailure, setEligibilityFailure] =
-    useState<{
-      memberId: string;
-      message: string;
-    } | null>(null);
-
-  // Check-in action
-  const [checkingIn, setCheckingIn] = useState(false);
-  const [checkInError, setCheckInError] = useState("");
-  const [checkInResult, setCheckInResult] = useState<{
-    memberId: string;
-    result: CheckInResponse;
-  } | null>(null);
-
-  const reportKey =
-    `${date}:${dailySearch}:${page}:${refreshVersion}`;
-
-  const searchKey = `${memberTerm}:${searchVersion}`;
-
+  const reportKey = `${date}:${dailySearch}:${page}:${refreshVersion}`;
   // Load daily attendance and statistics.
   useEffect(() => {
     const controller = new AbortController();
@@ -194,63 +77,6 @@ export default function AttendancePage() {
     return () => controller.abort();
   }, [date, dailySearch, page, reportKey]);
 
-  // Search registered members on form submission.
-  useEffect(() => {
-    if (!memberTerm) return;
-
-    const controller = new AbortController();
-
-    void attendanceApi
-      .searchMembers(memberTerm, controller.signal)
-      .then((response) => {
-        if (controller.signal.aborted) return;
-
-        setSearchLoaded({
-          key: searchKey,
-          members: response.data,
-        });
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-
-        setSearchFailure({
-          key: searchKey,
-          message: getApiErrorMessage(error),
-        });
-      });
-
-    return () => controller.abort();
-  }, [memberTerm, searchKey]);
-
-  // Check the selected member's membership coverage.
-  useEffect(() => {
-    if (!selectedMember || !canCheckIn) return;
-
-    const memberId = selectedMember.id;
-    const controller = new AbortController();
-
-    void membershipsApi
-      .getSummary(memberId, controller.signal)
-      .then((response) => {
-        if (controller.signal.aborted) return;
-
-        setEligibilityLoaded({
-          memberId,
-          summary: response.data,
-        });
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-
-        setEligibilityFailure({
-          memberId,
-          message: getApiErrorMessage(error),
-        });
-      });
-
-    return () => controller.abort();
-  }, [selectedMember, canCheckIn]);
-
   const report =
     reportLoaded?.key === reportKey
       ? reportLoaded
@@ -261,390 +87,16 @@ export default function AttendancePage() {
       ? reportFailure.message
       : null;
 
-  const matches =
-    searchLoaded?.key === searchKey
-      ? searchLoaded.members
-      : null;
-
-  const searchError =
-    searchFailure?.key === searchKey
-      ? searchFailure.message
-      : null;
-
-  const eligibility =
-    selectedMember &&
-    eligibilityLoaded?.memberId === selectedMember.id
-      ? eligibilityLoaded.summary
-      : null;
-
-  const eligibilityError =
-    selectedMember &&
-    eligibilityFailure?.memberId === selectedMember.id
-      ? eligibilityFailure.message
-      : null;
-
-  const eligible =
-    Boolean(selectedMember?.isActive) &&
-    eligibility?.status === "ACTIVE";
-
-  const alreadyCheckedIn =
-    checkInResult?.memberId === selectedMember?.id;
-
-  const maxCheckIns = Math.max(
-    1,
-    ...(report?.summary.last7Days.map(
-      (day) => day.checkIns
-    ) ?? [])
-  );
-
-  function submitMemberSearch(event: FormEvent) {
-    event.preventDefault();
-
-    const term = memberQuery.trim();
-
-    if (term.length < 2) {
-      setSearchInputError(
-        "Enter at least 2 characters to search."
-      );
-      return;
-    }
-
-    setSearchInputError("");
-    setMemberTerm(term);
-    setSearchVersion((value) => value + 1);
-  }
-
-  function selectMember(member: AttendanceMember) {
-    setSelectedMember(member);
-    setCheckInError("");
-    setCheckInResult(null);
-  }
-
-  function submitDailySearch(event: FormEvent) {
-    event.preventDefault();
-    setPage(1);
-    setDailySearch(dailySearchInput.trim());
-  }
-
-  function refreshReport() {
-    setRefreshVersion((value) => value + 1);
-  }
-
-  async function handleCheckIn() {
-    if (
-      !canCheckIn ||
-      !selectedMember ||
-      !eligible ||
-      checkingIn ||
-      alreadyCheckedIn
-    ) {
-      return;
-    }
-
-    const memberId = selectedMember.id;
-
-    setCheckingIn(true);
-    setCheckInError("");
-
-    try {
-      const response =
-        await attendanceApi.checkIn(memberId);
-
-      setCheckInResult({
-        memberId,
-        result: response,
-      });
-
-      // Show the new check-in in today's list.
-      setDate(todayInColombo());
-      setDailySearch("");
-      setDailySearchInput("");
-      setPage(1);
-      refreshReport();
-    } catch (error: unknown) {
-      setCheckInError(getApiErrorMessage(error));
-    } finally {
-      setCheckingIn(false);
-    }
-  }
-
-  return (
-    <div className="space-y-7">
-      {/* Header */}
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-gym-orange">
-            Member Operations
-          </p>
-
-          <h1 className="mt-2 text-3xl font-black uppercase italic text-white">
-            Attendance Management
-          </h1>
-
-          <p className="mt-2 text-sm text-gym-muted">
-            Check members in and monitor gym visits.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={refreshReport}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-gym-card px-4 py-3 text-sm font-bold text-zinc-200 hover:bg-white/5"
-        >
-          <RefreshCw size={17} />
-          Refresh
-        </button>
-      </header>
-
-      {/* Quick check-in */}
-      <PermissionGate permissions={["attendance.check-in", "memberships.read"]}>
-      <section className="rounded-2xl border border-white/10 bg-gym-card p-6">
-        <div className="flex items-center gap-3">
-          <UserRoundCheck
-            size={23}
-            className="text-gym-orange"
-          />
-
-          <div>
-            <h2 className="text-xl font-black text-white">
-              Quick Member Check-In
-            </h2>
-
-            <p className="mt-1 text-xs text-gym-muted">
-              Search registered members by name,
-              member reference or phone.
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={submitMemberSearch}
-          className="mt-6 flex flex-wrap gap-2"
-        >
-          <input
-            type="search"
-            value={memberQuery}
-            maxLength={80}
-            disabled={checkingIn}
-            onChange={(event) =>
-              setMemberQuery(event.target.value)
-            }
-            placeholder="Search member..."
-            aria-label="Find a member for check-in"
-            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-gym-bg px-4 py-3 text-sm text-white outline-none focus:border-gym-orange"
-          />
-
-          <button
-            type="submit"
-            disabled={checkingIn}
-            className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
-          >
-            <Search size={17} />
-            Search
-          </button>
-        </form>
-
-        {searchInputError && (
-          <p role="alert" className="mt-3 text-sm text-red-400">
-            {searchInputError}
-          </p>
-        )}
-
-        {searchError && (
-          <p role="alert" className="mt-3 text-sm text-red-400">
-            {searchError}
-          </p>
-        )}
-
-        {memberTerm && !matches && !searchError && (
-          <p role="status" className="mt-4 text-sm text-gym-muted">
-            Searching members...
-          </p>
-        )}
-
-        {matches && (
-          <div className="mt-4 space-y-2">
-            {matches.length === 0 ? (
-              <p className="rounded-xl border border-white/10 p-4 text-sm text-gym-muted">
-                No matching members found.
-              </p>
-            ) : (
-              matches.map((member) => (
-                <button
-                  key={member.id}
-                  type="button"
-                  disabled={checkingIn}
-                  onClick={() => selectMember(member)}
-                  className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left transition disabled:opacity-50 ${
-                    selectedMember?.id === member.id
-                      ? "border-orange-500/50 bg-orange-500/10"
-                      : "border-white/10 bg-gym-bg hover:border-orange-500/30"
-                  }`}
-                >
-                  <div>
-                    <p className="font-bold text-white">
-                      {member.fullName}
-                    </p>
-
-                    <p className="mt-1 text-xs text-gym-muted">
-                      {member.memberId} · {member.phone}
-                    </p>
-                  </div>
-
-                  <span
-                    className={
-                      member.isActive
-                        ? "text-xs font-bold text-emerald-400"
-                        : "text-xs font-bold text-red-400"
-                    }
-                  >
-                    {member.isActive
-                      ? "ACTIVE PROFILE"
-                      : "INACTIVE PROFILE"}
-                  </span>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Selected member and eligibility */}
-        {selectedMember && (
-          <div className="mt-6 rounded-xl border border-white/10 bg-gym-bg p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-black text-white">
-                  {selectedMember.fullName}
-                </h3>
-
-                <p className="mt-1 text-xs text-gym-muted">
-                  {selectedMember.memberId}
-                </p>
-              </div>
-
-              {eligibility && (
-                <StatusBadge status={eligibility.status} />
-              )}
-            </div>
-
-            {eligibilityError && (
-              <p role="alert" className="mt-4 text-sm text-red-400">
-                {eligibilityError}
-              </p>
-            )}
-
-            {!eligibility && !eligibilityError && (
-              <p role="status" className="mt-4 text-sm text-gym-muted">
-                Checking membership eligibility...
-              </p>
-            )}
-
-            {eligibility && (
-              <div className="mt-5 space-y-2 text-sm">
-                <p className="text-zinc-300">
-                  Current plan:{" "}
-                  <span className="font-bold text-white">
-                    {eligibility.currentMembership
-                      ?.planSnapshot.name ?? "None"}
-                  </span>
-                </p>
-
-                <p className="text-zinc-300">
-                  Membership valid through:{" "}
-                  <span className="font-bold text-white">
-                    {eligibility.currentMembership
-                      ? formatDate(
-                          eligibility.currentMembership.lastValidDate
-                        )
-                      : "—"}
-                  </span>
-                </p>
-
-                {!eligible && (
-                  <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300">
-                    <AlertCircle
-                      size={18}
-                      className="shrink-0"
-                    />
-
-                    <p>
-                      {selectedMember.isActive
-                        ? "This member has no valid membership today. Check-in is blocked."
-                        : "This member profile is inactive. Check-in is blocked."}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {checkInResult?.memberId ===
-              selectedMember.id && (
-              <div
-                role="status"
-                className="mt-5 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-300"
-              >
-                <CheckCircle2
-                  size={19}
-                  className="shrink-0"
-                />
-                {checkInResult.result.message}{" "}
-                ({formatTime(
-                  checkInResult.result.data.checkedInAt
-                )})
-              </div>
-            )}
-
-            {checkInError && (
-              <div
-                role="alert"
-                className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400"
-              >
-                {checkInError}
-              </div>
-            )}
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void handleCheckIn()}
-                disabled={
-                  !eligible ||
-                  checkingIn ||
-                  alreadyCheckedIn
-                }
-                className="inline-flex items-center gap-2 rounded-xl bg-gym-orange px-6 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <CheckCircle2 size={18} />
-                {checkingIn
-                  ? "Checking In..."
-                  : alreadyCheckedIn
-                    ? "Check-In Recorded"
-                    : "Check In Member"}
-              </button>
-
-              <Link
-                to={`/members/${selectedMember.id}`}
-                className="text-sm font-bold text-gym-orange hover:underline"
-              >
-                View Member Profile
-              </Link>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Reporting */}
-      </PermissionGate>
+  function submitDailySearch(event: FormEvent) { event.preventDefault(); setPage(1); setDailySearch(dailySearchInput.trim()); }
+  function refreshReport() { setRefreshVersion(value => value + 1); }
+  return <div className="space-y-5">
+    <header className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Attendance</h1><div className="flex gap-2">{canUseFrontDesk(staff) && <Link to="/front-desk" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-gym-orange px-4 text-sm font-semibold text-white"><UserRoundCheck size={17} />Front Desk</Link>}<button type="button" onClick={refreshReport} aria-label="Refresh attendance" className="rounded-xl border border-white/15 p-3 text-zinc-300"><RefreshCw size={16} /></button></div></header>
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-white">
-              Attendance Overview
+              Visit history
             </h2>
-
-            <p className="mt-1 text-sm text-gym-muted">
-              Reports for the selected calendar date.
-            </p>
           </div>
 
           <div>
@@ -652,7 +104,7 @@ export default function AttendancePage() {
               htmlFor="attendance-date"
               className="mb-2 block text-xs text-gym-muted"
             >
-              Report Date
+              Date
             </label>
 
             <input
@@ -689,7 +141,7 @@ export default function AttendancePage() {
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 {
-                  label: "Selected Day Check-Ins",
+                  label: "Visits",
                   value: report.summary.totalCheckIns,
                 },
                 {
@@ -697,7 +149,7 @@ export default function AttendancePage() {
                   value: report.summary.previousDayCheckIns,
                 },
                 {
-                  label: "Change From Previous Day",
+                  label: "Change",
                   value: report.summary.changeFromPreviousDay,
                 },
               ].map((item) => (
@@ -716,60 +168,13 @@ export default function AttendancePage() {
               ))}
             </div>
 
-            {/* Seven-day chart */}
-            <div className="rounded-2xl border border-white/10 bg-gym-card p-6">
-              <h3 className="text-lg font-black text-white">
-                Last 7 Days
-              </h3>
-
-              <div className="mt-7 flex h-44 items-end gap-3">
-                {report.summary.last7Days.map(
-                  (day) => (
-                    <div
-                      key={day.date}
-                      className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
-                      title={`${formatDate(day.date)}: ${day.checkIns} check-ins`}
-                    >
-                      <span className="text-xs text-zinc-400">
-                        {day.checkIns}
-                      </span>
-
-                      <div className="flex h-28 w-full items-end justify-center rounded-t-md bg-white/5">
-                        <div
-                          className="w-full max-w-12 rounded-t-md bg-gym-orange"
-                          style={{
-                            height: `${
-                              (day.checkIns / maxCheckIns) * 100
-                            }%`,
-                          }}
-                        />
-                      </div>
-
-                      <span className="text-[10px] text-zinc-400 sm:text-xs">
-                        {new Intl.DateTimeFormat(
-                          "en-GB",
-                          {
-                            weekday: "short",
-                            timeZone: "UTC",
-                          }
-                        ).format(
-                          new Date(
-                            `${day.date}T00:00:00.000Z`
-                          )
-                        )}
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-
+            <div className="rounded-2xl border border-white/10 bg-gym-card p-5"><h3 className="mb-4 text-sm font-semibold">Last 7 days</h3><DashboardChart label="Attendance history trend" kind="bar" series={[{ label: "Check-ins", color: "#60a5fa", data: report.summary.last7Days.map(day => ({ date: day.date, value: day.checkIns })) }]} /></div>
             {/* Daily attendance list */}
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-gym-card">
               <div className="space-y-4 border-b border-white/10 p-6">
                 <div>
                   <h3 className="text-lg font-black text-white">
-                    Daily Check-Ins
+                    Visits
                   </h3>
 
                   <p className="mt-1 text-xs text-gym-muted">
@@ -789,7 +194,7 @@ export default function AttendancePage() {
                     onChange={(event) =>
                       setDailySearchInput(event.target.value)
                     }
-                    placeholder="Search today's visitors..."
+                    placeholder="Search visits..."
                     aria-label="Search daily check-ins"
                     className="min-w-0 flex-1 rounded-xl border border-white/10 bg-gym-bg px-4 py-3 text-sm text-white"
                   />
@@ -827,13 +232,7 @@ export default function AttendancePage() {
                             className="border-b border-white/5"
                           >
                             <td className="px-5 py-4">
-                              <Link
-                                to={`/members/${record.memberId}`}
-                                className="font-bold text-white hover:text-gym-orange"
-                              >
-                                {record.memberName ??
-                                  "Unknown Member"}
-                              </Link>
+                              {hasPermissions(staff, "members.read") ? <Link to={`/members/${record.memberId}`} className="font-semibold text-white hover:text-gym-orange">{record.memberName ?? "Unknown Member"}</Link> : <span className="font-semibold text-white">{record.memberName ?? "Unknown Member"}</span>}
                             </td>
 
                             <td className="px-5 py-4 text-zinc-300">
@@ -895,13 +294,5 @@ export default function AttendancePage() {
           </>
         )}
       </section>
-
-      <p className="flex items-start gap-2 text-xs text-gym-muted">
-        <Users size={16} className="shrink-0" />
-        Attendance eligibility is checked again by the
-        backend when staff submit a check-in. Payment
-        balances do not automatically block entry.
-      </p>
-    </div>
-  );
+  </div>;
 }

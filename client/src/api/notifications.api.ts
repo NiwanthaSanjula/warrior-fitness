@@ -26,6 +26,7 @@ export interface SimulationResult {
   realMessagesSent: 0; deliveryMode: "SIMULATION_ONLY";
 }
 export const notificationsApi = {
+  async automationStatus(signal?: AbortSignal): Promise<Pick<NotificationOverview, "success" | "scheduler">> { return (await api.get("/notifications/automation-status", { signal })).data; },
   async overview(signal?: AbortSignal): Promise<NotificationOverview> { return (await api.get<NotificationOverview>("/notifications/overview", { signal })).data; },
   async simulate(): Promise<SimulationResult> {
     return (await api.post<SimulationResult>("/notifications/simulate-due")).data;

@@ -6,18 +6,15 @@ import {
 } from "react-router";
 import type { ReactNode } from "react";
 
-import { Dumbbell } from "lucide-react";
+import gymLogo from "../assets/LOGO.png";
 import { useAuth } from "../auth/auth-context";
-import { hasPermissions, type Permission } from "../auth/permissions";
+import { canUseFrontDesk, hasPermissions, type Permission } from "../auth/permissions";
 import { equipmentLoginReturn } from "../utils/equipment";
 
 function LoadingScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-gym-bg">
-      <Dumbbell
-        size={42}
-        className="animate-pulse text-gym-orange"
-      />
+      <img src={gymLogo} alt="" className="h-20 w-16 object-contain motion-safe:animate-pulse" />
 
       <p className="text-sm font-semibold tracking-widest text-gym-muted">
         LOADING WARRIOR FITNESS...
@@ -72,4 +69,9 @@ export function AdminOnlyRoute() {
 export function PermissionRoute({ permissions, children }: { permissions: Permission[]; children?: ReactNode }) {
   const { staff } = useAuth();
   return hasPermissions(staff, ...permissions) ? children ?? <Outlet /> : <Navigate to="/dashboard" replace />;
+}
+
+export function FrontDeskRoute({ children }: { children: ReactNode }) {
+  const { staff } = useAuth();
+  return canUseFrontDesk(staff) ? children : <Navigate to="/dashboard" replace />;
 }

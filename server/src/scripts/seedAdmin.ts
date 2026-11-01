@@ -70,7 +70,7 @@ async function seedAdmin(): Promise<void> {
   }
 }
 
-seedAdmin().catch((error: unknown) => {
-  console.error("Admin setup failed:", error);
+seedAdmin().catch(() => {
+  console.error("Admin setup failed. Verify the private bootstrap credentials and database configuration.");
   process.exitCode = 1;
 });

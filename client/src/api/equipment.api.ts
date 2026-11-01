@@ -1,8 +1,10 @@
 import { api } from "./api";
+import type { EquipmentFaultAlert } from "../types/equipment";
 import type { EquipmentFields, EquipmentFilters, EquipmentHistory, EquipmentItem, EquipmentList, EquipmentResponse, EquipmentWork, IncidentStatus, InventoryResponse, MaintenanceDashboard, Severity, WorkAction, WorkAssignment, WorkInput, WorkStatus, EquipmentIncident } from "../types/equipment";
 const path = (id: string) => `/equipment/${encodeURIComponent(id)}`;
 type WithoutVersion<T> = T extends unknown ? Omit<T, "version"> : never;
 export const equipmentApi = {
+  async alerts(signal?: AbortSignal): Promise<{ success: boolean; data: EquipmentFaultAlert[] }> { return (await api.get("/equipment/alerts", { signal })).data; },
   async list(params: EquipmentFilters, signal?: AbortSignal): Promise<InventoryResponse> { return (await api.get("/equipment", { params, signal })).data; },
   async get(id: string, signal?: AbortSignal): Promise<EquipmentResponse> { return (await api.get(path(id), { signal })).data; },
   async history<K extends keyof EquipmentHistory>(id: string, kind: K, page: number, signal?: AbortSignal): Promise<EquipmentList<EquipmentHistory[K]>> { return (await api.get(`${path(id)}/history`, { params: { kind, page, limit: 10 }, signal })).data; },

@@ -6,7 +6,7 @@ import { Link } from "react-router";
 import type { DashboardResource } from "../../hooks/useDashboardResource";
 import { formatCount, formatGymDate, formatLkr } from "../../utils/dashboard";
 
-function ResourceContent<T>({ resource, label, children }: {
+export function ResourceContent<T>({ resource, label, children }: {
   resource: DashboardResource<T>; label: string; children: (data: T) => ReactNode;
 }) {
   const { state, retry } = resource;
@@ -28,26 +28,34 @@ function ResourceContent<T>({ resource, label, children }: {
   return null;
 }
 
-export function MetricCard<T>({ title, icon: Icon, resource, children }: {
-  title: string; icon: LucideIcon; resource: DashboardResource<T>; children: (data: T) => ReactNode;
+const metricTones = {
+  orange: "border-orange-400/45 bg-orange-500/15 shadow-orange-500/10 [&_.metric-icon]:bg-orange-400/25 [&_.metric-icon]:text-orange-200 [&_.metric-icon]:ring-orange-300/30",
+  emerald: "border-emerald-400/45 bg-emerald-500/15 shadow-emerald-500/10 [&_.metric-icon]:bg-emerald-400/25 [&_.metric-icon]:text-emerald-200 [&_.metric-icon]:ring-emerald-300/30",
+  blue: "border-blue-400/45 bg-blue-500/15 shadow-blue-500/10 [&_.metric-icon]:bg-blue-400/25 [&_.metric-icon]:text-blue-200 [&_.metric-icon]:ring-blue-300/30",
+  purple: "border-violet-400/45 bg-violet-500/15 shadow-violet-500/10 [&_.metric-icon]:bg-violet-400/25 [&_.metric-icon]:text-violet-200 [&_.metric-icon]:ring-violet-300/30",
+  amber: "border-amber-400/45 bg-amber-500/15 shadow-amber-500/10 [&_.metric-icon]:bg-amber-400/25 [&_.metric-icon]:text-amber-200 [&_.metric-icon]:ring-amber-300/30",
+  cyan: "border-cyan-400/45 bg-cyan-500/15 shadow-cyan-500/10 [&_.metric-icon]:bg-cyan-400/25 [&_.metric-icon]:text-cyan-200 [&_.metric-icon]:ring-cyan-300/30",
+};
+export function MetricCard<T>({ title, icon: Icon, resource, children, tone = "orange" }: {
+  title: string; icon: LucideIcon; resource: DashboardResource<T>; children: (data: T) => ReactNode; tone?: keyof typeof metricTones;
 }) {
-  return <article aria-label={title} className="min-w-0 rounded-2xl border border-white/10 bg-gym-card p-5">
-    <div className="flex items-center justify-between gap-3"><h3 className="text-xs font-bold uppercase tracking-wide text-zinc-400">{title}</h3><Icon aria-hidden="true" size={20} className="shrink-0 text-gym-orange" /></div>
+  return <article aria-label={title} className={`min-w-0 rounded-2xl border p-5 shadow-lg ${metricTones[tone]}`}>
+    <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold text-zinc-200">{title}</h3><span className="metric-icon shrink-0 rounded-xl p-2.5 ring-1"><Icon aria-hidden="true" size={20} /></span></div>
     <ResourceContent resource={resource} label={title}>{children}</ResourceContent>
   </article>;
 }
 
 export function MetricValue({ value, detail }: { value: string; detail: string }) {
-  return <><p className="mt-4 break-words text-2xl font-black tracking-tight text-white sm:text-3xl">{value}</p><p className="mt-2 text-xs leading-5 text-gym-muted">{detail}</p></>;
+  return <><p className="mt-3 break-words text-[clamp(1.75rem,2.2vw,2.25rem)] font-bold tracking-tight text-white">{value}</p>{detail && <p className="mt-1 text-xs text-zinc-300">{detail}</p>}</>;
 }
 
 export function DashboardPanel<T>({ title, description, resource, action, children }: {
-  title: string; description: string; resource: DashboardResource<T>;
+  title: string; description?: string; resource: DashboardResource<T>;
   action?: ReactNode; children: (data: T) => ReactNode;
 }) {
   const id = useId();
   return <section aria-labelledby={id} className="min-w-0 rounded-2xl border border-white/10 bg-gym-card p-5 sm:p-6">
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-4"><div><h3 id={id} className="font-bold text-white">{title}</h3><p className="mt-1 text-xs leading-5 text-gym-muted">{description}</p></div>{action}</div>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 id={id} className="font-bold text-white">{title}</h3>{description && <p className="mt-1 text-xs leading-5 text-gym-muted">{description}</p>}</div>{action}</div>
     <ResourceContent resource={resource} label={title}>{children}</ResourceContent>
   </section>;
 }

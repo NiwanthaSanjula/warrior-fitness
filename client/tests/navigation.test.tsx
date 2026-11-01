@@ -11,9 +11,19 @@ function RouteControls() {
 }
 
 describe("real AppLayout navigation authorization", () => {
+  it("groups Admin navigation into seven top-level entries while preserving every operational route", () => {
+    renderWithAuth(<AppLayout />, authState("ADMIN"));
+    const navigation = screen.getByRole("navigation");
+    expect([...navigation.children].filter(element => element.tagName !== "P")).toHaveLength(7);
+    for (const name of ["Members", "Finance", "POS & Retail", "Equipment", "Administration"]) fireEvent.click(within(navigation).getByRole("button", { name }));
+    const paths = within(navigation).getAllByRole("link").map(link => link.getAttribute("href"));
+    expect(new Set(paths).size).toBe(paths.length);
+    for (const path of ["/front-desk", "/members", "/plans", "/attendance", "/attention", "/attention/follow-ups/due", "/payments", "/expenses", "/cash-closing", "/closing-history", "/retail/checkout", "/retail/products", "/retail/sales", "/retail", "/equipment", "/equipment/maintenance", "/staff", "/notifications", "/reports", "/settings"]) expect(paths).toContain(path);
+  });
   it("shows Reports and existing Admin-only Settings to Admins", () => {
     renderWithAuth(<AppLayout />, authState("ADMIN"));
     const navigation = within(screen.getByRole("navigation"));
+    fireEvent.click(navigation.getByRole("button", { name: "Administration" }));
     expect(navigation.getByRole("link", { name: "Reports" })).toHaveAttribute("href", "/reports");
     expect(navigation.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
   });
@@ -24,10 +34,11 @@ describe("real AppLayout navigation authorization", () => {
     expect(navigation.queryByRole("link", { name: "Reports" })).not.toBeInTheDocument();
     expect(navigation.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
     fireEvent.click(navigation.getByRole("button", { name: "Finance" }));
+    fireEvent.click(navigation.getByRole("button", { name: "Members" }));
     for (const [name, path] of [
-      ["Dashboard", "/dashboard"], ["Manage Members", "/members"],
-      ["Membership Plans", "/plans"], ["Payments & Invoices", "/payments"],
-      ["Attendance", "/attendance"], ["Attention Center", "/attention"],
+      ["Dashboard", "/dashboard"], ["Directory", "/members"],
+      ["Plans", "/plans"], ["Payments & Invoices", "/payments"],
+      ["Visit history", "/attendance"], ["Attention Center", "/attention"],
     ]) {
       expect(navigation.getByRole("link", { name })).toHaveAttribute("href", path);
     }

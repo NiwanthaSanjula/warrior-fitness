@@ -15,6 +15,7 @@ export interface EquipmentResponse { success: boolean; equipment: EquipmentItem;
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type IncidentStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "DISMISSED";
 export interface EquipmentIncident { id: string; equipmentId: string; description: string; severity: Severity; status: IncidentStatus; reporterName: string; reportedAt: string; closedAt: string | null; reviewNotes?: string }
+export interface EquipmentFaultAlert { id: string; equipmentId: string; equipmentName: string; assetId: string | null; description: string; severity: Severity; status: "OPEN" | "ACKNOWLEDGED"; reportedAt: string }
 export type WorkStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export interface WorkAssignment { technician: string; provider: string; contact: string; estimatedCostLkr: number | null }
 export interface WorkInput extends WorkAssignment { title: string; kind: "PREVENTIVE" | "REPAIR"; plannedDate: string; incidentId: string | null; notes: string; version: number }

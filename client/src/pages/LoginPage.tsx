@@ -7,7 +7,6 @@ import { equipmentLoginReturn } from "../utils/equipment";
 
 import {
   ArrowRight,
-  Dumbbell,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -16,6 +15,7 @@ import {
 
 import { useAuth } from "../auth/auth-context";
 import { getApiErrorMessage } from "../api/api";
+import gymLogo from "../assets/LOGO.png";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -63,9 +63,7 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute -left-48 bottom-0 h-125 w-125 rounded-full bg-gym-orange/15 blur-[120px]" />
 
         <div className="relative z-10 flex items-center gap-4">
-          <div className="rounded-2xl bg-gym-orange p-4 shadow-lg shadow-orange-600/20">
-            <Dumbbell size={34} className="text-white" />
-          </div>
+          <img src={gymLogo} alt="" className="h-24 w-20 shrink-0 object-contain" />
 
           <div className="leading-none">
             <h1 className="text-3xl font-black italic text-red-500">
@@ -116,10 +114,7 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div className="mb-12 flex items-center gap-3 lg:hidden">
-            <Dumbbell
-              size={34}
-              className="text-gym-orange"
-            />
+            <img src={gymLogo} alt="" className="h-20 w-14 shrink-0 object-contain" />
 
             <h1 className="text-2xl font-black italic">
               WARRIOR FITNESS

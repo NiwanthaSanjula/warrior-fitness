@@ -14,6 +14,6 @@ mongoose.connection.on("disconnected", () => {
   console.warn("MongoDB connection lost");
 });
 
-mongoose.connection.on("error", (error) => {
-  console.error("MongoDB connection error:", error.message);
+mongoose.connection.on("error", () => {
+  console.error("MongoDB connection failed. Verify database access and environment configuration.");
 });
