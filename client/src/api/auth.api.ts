@@ -15,6 +15,10 @@ interface LogoutResponse {
 }
 
 export const authApi = {
+  async loginDemo() {
+    const response = await api.post<AuthResponse>("/auth/demo-login");
+    return response.data;
+  },
   // Staff login
   async login(email: string, password: string) {
     const response = await api.post<AuthResponse>(

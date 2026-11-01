@@ -244,3 +244,14 @@ describe("manual simulation and duplicate handling", () => {
     await waitFor(() => expect(notificationsApi.overview).toHaveBeenCalledTimes(2));
   });
 });
+
+
+it("lets public demo visitors inspect reminders and consent without creating simulations or changing opt-in", async () => {
+  const value = authState("ADMIN"); value.staff = { ...value.staff!, readOnly: true };
+  renderWithAuth(<NotificationsPage />, value); await ready();
+  const simulate = screen.getByRole("button", { name: "Simulate due reminders" }); expect(simulate).toBeDisabled(); fireEvent.click(simulate);
+  await lookup();
+  const optIn = await screen.findByRole("button", { name: /Record confirmed opt-in|Revoke consent/ });
+  expect(optIn).toBeDisabled(); fireEvent.click(optIn);
+  expect(notificationsApi.simulate).not.toHaveBeenCalled(); expect(notificationsApi.saveConsent).not.toHaveBeenCalled();
+});

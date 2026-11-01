@@ -7,7 +7,7 @@ export async function connectDatabase(): Promise<void> {
     serverSelectionTimeoutMS: 10000,
   });
 
-  console.log("MongoDB connected successfully");
+  console.log(`MongoDB connected: ${mongoose.connection.db?.databaseName ?? "unverified"}`);
 }
 
 mongoose.connection.on("disconnected", () => {

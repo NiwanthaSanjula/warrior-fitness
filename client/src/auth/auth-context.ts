@@ -10,6 +10,7 @@ export interface AuthStaff {
   email: string;
   role: StaffRole;
   permissions: Permission[];
+  readOnly?: boolean;
 }
 
 export interface AuthContextValue {
@@ -22,6 +23,7 @@ export interface AuthContextValue {
   ) => Promise<void>;
 
   logout: () => Promise<void>;
+  loginDemo: () => Promise<void>;
 }
 
 export const AuthContext =

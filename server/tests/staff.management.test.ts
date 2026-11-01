@@ -87,7 +87,7 @@ describe("audited staff administration with explicitly mocked persistence", () =
     [{ kind: "password", password: "fictional-new-password" }, { passwordHash: "fictional-new-hash-not-a-real-credential" }, "PASSWORD_RESET"],
   ] as const)("uses shared compare-and-increment for $0.kind and records the correct event", async (input, fields, action) => {
     await mutateStaff(actor, target().id, 3, input as Parameters<typeof mutateStaff>[3]);
-    expect(Staff.findOneAndUpdate).toHaveBeenCalledWith({ _id: target().id, sessionVersion: 3 }, { $set: fields, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true, session });
+    expect(Staff.findOneAndUpdate).toHaveBeenCalledWith({ _id: target().id, sessionVersion: 3, isDemoViewer: { $ne: true } }, { $set: fields, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true, session });
     expect(savedAudit).toHaveLength(1); expect(savedAudit[0].action).toBe(action);
     const event = JSON.stringify(savedAudit[0].toObject());
     expect(event).not.toContain("fictional-new-password"); expect(event).not.toContain("fictional-new-hash");

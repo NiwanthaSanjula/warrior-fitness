@@ -22,19 +22,20 @@ export function verifyDemoUri(uri: string) {
 export function verifyConnectedDatabase(databaseName: string | undefined) {
   if (databaseName !== DEMO_DATABASE) throw new DemoError("Connected database identity could not be verified as warrior_fitness_demo. No writes permitted.");
 }
-export interface DemoConfig { uri: string; password: string; jwtSecret: string; port: number; clientUrl: string }
+export interface DemoConfig { uri: string; password: string; jwtSecret: string; port: number; clientUrl: string; publicLoginEnabled?: boolean }
 export function parseDemoConfig(values: Record<string, string>, needsCredentials: boolean): DemoConfig {
   if (values.NODE_ENV === "production" || process.env.NODE_ENV === "production") throw new DemoError("Demo tools cannot run in production mode.");
   const uri = values.DEMO_MONGODB_URI?.trim();
   if (!uri) throw new DemoError("DEMO_MONGODB_URI is missing from server/.env.demo.local. Normal application MONGODB_URI is never used.");
-  const allowed = new Set(["DEMO_MONGODB_URI", "DEMO_STAFF_PASSWORD", "JWT_SECRET", "PORT", "CLIENT_URL", "NODE_ENV"]);
+  const allowed = new Set(["DEMO_MONGODB_URI", "DEMO_STAFF_PASSWORD", "JWT_SECRET", "PORT", "CLIENT_URL", "NODE_ENV", "DEMO_PUBLIC_LOGIN_ENABLED"]);
   if (Object.keys(values).some(key => !allowed.has(key))) throw new DemoError("Demo configuration contains an unsupported setting. Use only the documented demo keys; never copy the normal application .env into this file.");
   verifyDemoUri(uri);
   const password = values.DEMO_STAFF_PASSWORD ?? "", jwtSecret = values.JWT_SECRET ?? "";
   if (needsCredentials && (password.length < 12 || password.length > 128 || jwtSecret.length < 32)) throw new DemoError("Set DEMO_STAFF_PASSWORD (12–128 characters) and JWT_SECRET (at least 32 characters) in the ignored demo configuration. Do not share them.");
   const port = Number(values.PORT ?? 5000), clientUrl = values.CLIENT_URL ?? "http://localhost:5173";
   if (!Number.isInteger(port) || port < 1 || port > 65535 || !/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\/?$/.test(clientUrl)) throw new DemoError("Demo PORT must be valid and CLIENT_URL must be a local HTTP(S) origin.");
-  return { uri, password, jwtSecret, port, clientUrl };
+  if (values.DEMO_PUBLIC_LOGIN_ENABLED !== undefined && !["true", "false"].includes(values.DEMO_PUBLIC_LOGIN_ENABLED)) throw new DemoError("DEMO_PUBLIC_LOGIN_ENABLED must be true or false.");
+  return { uri, password, jwtSecret, port, clientUrl, publicLoginEnabled: values.DEMO_PUBLIC_LOGIN_ENABLED === "true" };
 }
 export function loadDemoConfig(needsCredentials: boolean): DemoConfig {
   try {
@@ -63,6 +64,7 @@ export function installDemoEnvironment(config: DemoConfig) {
   process.env.PORT = String(config.port);
   process.env.CLIENT_URL = config.clientUrl;
   process.env.NOTIFICATION_SCHEDULER_ENABLED = "false";
+  process.env.DEMO_PUBLIC_LOGIN_ENABLED = String(config.publicLoginEnabled ?? false);
 }
 export function safeDemoFailure(error: unknown): string {
   if (error instanceof DemoError) return error.message;

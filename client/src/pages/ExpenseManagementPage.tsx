@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { financialApi } from "../api/financial.api";
 import { getApiErrorMessage } from "../api/api";
 import { useAuth } from "../auth/auth-context";
-import { hasPermissions } from "../auth/permissions";
+import { canMutate, hasPermissions } from "../auth/permissions";
 import { useDashboardResource } from "../hooks/useDashboardResource";
 import { DashboardPanel, EmptyQueue } from "../components/dashboard/DashboardWidgets";
 import { AmountTile, FinancialFrame, FinancialNotice, FinancialPagination } from "../components/financial/FinancialWidgets";
@@ -64,7 +64,7 @@ export default function ExpenseManagementPage() {
 
   return <FinancialFrame title="Expense Management" subtitle="Record gym operating costs in whole-number LKR. Recorded financial history cannot be edited or deleted." tools={<button className={buttonClass} disabled={locked} onClick={() => setVersion((value) => value + 1)}>Refresh expenses</button>}>
     <FinancialNotice message={notice} /><FinancialNotice message={error} error />
-    <section className="rounded-2xl border border-white/10 bg-gym-card p-5 sm:p-6">
+    {canMutate(staff) && <section className="rounded-2xl border border-white/10 bg-gym-card p-5 sm:p-6">
       <h2 className="text-lg font-bold">Record an expense</h2><p className="mt-1 text-xs text-gym-muted">Responsible staff: {staff.fullName}. Closed gym dates reject all new entries.</p>
       <form aria-label="Record expense" ref={form} onSubmit={submit} className="mt-5">
         <fieldset disabled={locked} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 disabled:opacity-60">
@@ -78,7 +78,7 @@ export default function ExpenseManagementPage() {
         </fieldset>
       </form>
       {pending && !busy && <button className={`${buttonClass} mt-4`} onClick={() => void send(pending)}>Retry same expense</button>}
-    </section>
+    </section>}
 
     <form aria-label="Expense filters" onSubmit={(event) => { event.preventDefault(); setFilters(draft); setPage(1); setVersion((value) => value + 1); }} className="grid gap-3 rounded-2xl border border-white/10 bg-gym-card p-5 sm:grid-cols-2 xl:grid-cols-3">
       <label className="text-sm">From<input type="date" min="2007-01-01" max={today} required className={inputClass} value={draft.from} onChange={(event) => setDraft({ ...draft, from: event.target.value })} /></label>

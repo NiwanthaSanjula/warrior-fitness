@@ -19,3 +19,5 @@ services:
         generateValue: true
       - key: NOTIFICATION_SCHEDULER_ENABLED
         value: "false"
+      - key: DEMO_PUBLIC_LOGIN_ENABLED
+        value: "false"

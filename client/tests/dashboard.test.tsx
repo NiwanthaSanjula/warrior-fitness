@@ -454,3 +454,21 @@ describe("API-backed daily operations dashboard", () => {
     expect(screen.getByText(/No dashboard data is enabled/)).toBeInTheDocument();
   });
 });
+
+
+describe("public read-only demo dashboard", () => {
+  it("keeps real API-backed Admin overview reads while omitting registration, checkout and renewal actions", async () => {
+    const value = authState("ADMIN");
+    value.staff = { ...value.staff!, readOnly: true };
+    renderWithAuth(<DashboardPage />, value); await settled();
+    expect(metric("Today's collections").getByText("LKR 15,000")).toBeInTheDocument();
+    expect(reportsApi.getActiveMembers).toHaveBeenCalledTimes(1);
+    expect(financialApi.getDay).toHaveBeenCalledTimes(1);
+    expect(equipmentApi.dashboard).toHaveBeenCalledTimes(1);
+    expect(retailApi.dashboard).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("link", { name: /Register member/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /POS checkout/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^Renew/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Payments & invoices/ })).toHaveAttribute("href", "/payments");
+  });
+});

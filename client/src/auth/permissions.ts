@@ -11,10 +11,20 @@ export type Permission =
   | "equipment.read" | "equipment.report" | "equipment.manage"
   | "retail.read" | "retail.checkout" | "retail.sales.read" | "retail.manage";
 
+const mutationPermissions: readonly Permission[] = [
+  "members.create", "members.update", "members.status", "memberships.enroll", "memberships.renew",
+  "invoices.create", "payments.record", "attendance.check-in", "follow-ups.create", "equipment.report", "retail.checkout",
+];
+
+export function canMutate(staff: { readOnly?: boolean } | null): boolean {
+  return staff !== null && staff.readOnly !== true;
+}
+
 export function hasPermissions(
-  staff: { role: string; permissions: readonly Permission[] } | null,
+  staff: { role: string; permissions: readonly Permission[]; readOnly?: boolean } | null,
   ...permissions: Permission[]
 ): boolean {
+  if (staff?.readOnly && permissions.some(permission => mutationPermissions.includes(permission))) return false;
   return staff !== null && (staff.role === "ADMIN" || permissions.every((permission) => staff.permissions?.includes(permission)));
 }
 

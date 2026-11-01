@@ -21,7 +21,10 @@ export function onUnauthorized(listener: () => void): () => void {
 api.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401 && error.config?.url !== "/auth/login") {
+    // /me belongs to AuthProvider's revision-checked restoration. A stale
+    // anonymous refresh must not invalidate a newer successful demo/staff login.
+    if (axios.isAxiosError(error) && error.response?.status === 401 &&
+      !["/auth/login", "/auth/demo-login", "/auth/me"].includes(error.config?.url ?? "")) {
       for (const listener of unauthorizedListeners) listener();
     }
     return Promise.reject(error);

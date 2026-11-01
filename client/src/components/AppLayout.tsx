@@ -345,7 +345,7 @@ export default function AppLayout() {
               </p>
 
               <p className="mt-1 text-xs text-gym-muted">
-                {staff?.role === "ADMIN"
+                {staff?.readOnly ? "Demo Mode — Read Only" : staff?.role === "ADMIN"
                   ? "Administrator"
                   : "Receptionist"}
               </p>

@@ -11,6 +11,7 @@ import {
   EyeOff,
   LockKeyhole,
   ShieldCheck,
+  Compass,
 } from "lucide-react";
 
 import { useAuth } from "../auth/auth-context";
@@ -20,7 +21,7 @@ import gymLogo from "../assets/LOGO.png";
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, loginDemo } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,11 +33,23 @@ export default function LoginPage() {
     useState(false);
 
   const [error, setError] = useState("");
+  const [demoSubmitting, setDemoSubmitting] = useState(false);
+
+  async function tryDemo() {
+    if (submitting || demoSubmitting) return;
+    setError(""); setDemoSubmitting(true);
+    try {
+      await loginDemo();
+      navigate("/dashboard", { replace: true });
+    } catch (failure) { setError(getApiErrorMessage(failure)); }
+    finally { setDemoSubmitting(false); }
+  }
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+    if (submitting || demoSubmitting) return;
 
     setError("");
     setSubmitting(true);
@@ -103,7 +116,7 @@ export default function LoginPage() {
             size={19}
             className="text-gym-orange"
           />
-          Authorized staff access only
+          Staff access · Read-only public demo
         </div>
       </section>
 
@@ -227,7 +240,7 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || demoSubmitting}
               className="flex w-full items-center justify-center gap-3 rounded-xl bg-gym-orange px-5 py-4 font-extrabold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting
@@ -239,6 +252,13 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          <button type="button" onClick={() => void tryDemo()} disabled={submitting || demoSubmitting}
+            className="mt-4 flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-orange-400/50 bg-orange-500/10 px-4 py-3 text-sm font-bold text-orange-200 hover:bg-orange-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gym-orange disabled:cursor-not-allowed disabled:opacity-60">
+            <Compass size={20} aria-hidden="true" />
+            {demoSubmitting ? "Opening demo…" : "Try Demo — Explore Warrior Fitness"}
+          </button>
+          <p className="mt-2 text-center text-xs text-zinc-500" role={demoSubmitting ? "status" : undefined}>{demoSubmitting ? "Starting your read-only session…" : "No password needed · Fictional data · Read only"}</p>
 
           <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-zinc-500">
             Warrior Fitness Management System

@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router";
 import { financialApi } from "../api/financial.api";
 import { getApiErrorMessage } from "../api/api";
 import { useAuth } from "../auth/auth-context";
-import { hasPermissions } from "../auth/permissions";
+import { canMutate, hasPermissions } from "../auth/permissions";
 import { useDashboardResource } from "../hooks/useDashboardResource";
 import { DashboardPanel } from "../components/dashboard/DashboardWidgets";
 import { AmountTile, ClosingSnapshot, FinancialFrame, FinancialNotice, MethodTotals } from "../components/financial/FinancialWidgets";
@@ -86,6 +86,6 @@ export default function DailyCashClosingPage() {
     <FinancialNotice message={notice} /><FinancialNotice message={error} error />
     {busy && <p role="status" className="text-sm text-gym-muted">Saving closing…</p>}
     {pending && !busy && <button className={buttonClass} onClick={() => void send(pending)}>Retry same closing</button>}
-    {completed?.date === date ? <ClosingSnapshot closing={completed} /> : <DashboardPanel title="Day reconciliation" description="Cash counts use payment received timestamps and expense dates in Asia/Colombo. Refresh before finalizing if the ledger changes." resource={day}>{(preview) => preview.status === "CLOSED" ? <ClosingSnapshot closing={preview.closing} /> : <ClosingForm key={`${date}:${preview.revision}`} preview={preview} locked={locked} submit={(input) => void send({ ...input, requestId: crypto.randomUUID() })} />}</DashboardPanel>}
+    {completed?.date === date ? <ClosingSnapshot closing={completed} /> : <DashboardPanel title="Day reconciliation" description="Cash counts use payment received timestamps and expense dates in Asia/Colombo. Refresh before finalizing if the ledger changes." resource={day}>{(preview) => preview.status === "CLOSED" ? <ClosingSnapshot closing={preview.closing} /> : <ClosingForm key={`${date}:${preview.revision}`} preview={preview} locked={locked || !canMutate(staff)} submit={(input) => void send({ ...input, requestId: crypto.randomUUID() })} />}</DashboardPanel>}
   </FinancialFrame>;
 }

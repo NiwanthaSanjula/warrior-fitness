@@ -16,6 +16,7 @@ import {
   PermissionRoute,
   FrontDeskRoute,
   PublicOnlyRoute,
+  MutationRoute,
 } from "./components/ProtectedRoute";
 
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -171,12 +172,12 @@ export default function App() {
 
             <Route
               path="/plans/new"
-              element={<AsyncPage><PlanFormPage /></AsyncPage>}
+              element={<MutationRoute><AsyncPage><PlanFormPage /></AsyncPage></MutationRoute>}
             />
 
             <Route
               path="/plans/:id/edit"
-              element={<AsyncPage><PlanFormPage /></AsyncPage>}
+              element={<MutationRoute><AsyncPage><PlanFormPage /></AsyncPage></MutationRoute>}
             />
           </Route>
         </Route>

@@ -139,7 +139,7 @@ export default function MemberProfilePage() {
   async function handleStatusChange() {
     if (
       !member ||
-      staff?.role !== "ADMIN" ||
+      staff?.role !== "ADMIN" || staff.readOnly ||
       changingStatus
     ) {
       return;
@@ -309,7 +309,7 @@ export default function MemberProfilePage() {
               : "Inactive Profile"}
           </span>
 
-          {staff?.role === "ADMIN" && (
+          {staff?.role === "ADMIN" && !staff.readOnly && (
             <button
               type="button"
               disabled={changingStatus}

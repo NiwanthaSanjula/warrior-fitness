@@ -47,9 +47,43 @@ Set privately in Render:
 | `MONGODB_URI` | Private Atlas URI with the chosen demo database explicitly named |
 | `JWT_SECRET` | New private random secret, at least 32 characters; the Blueprint can generate it |
 | `NOTIFICATION_SCHEDULER_ENABLED` | `false` for the portfolio/demo deployment |
+| `DEMO_PUBLIC_LOGIN_ENABLED` | `true` only for this public demo connected to exactly `warrior_fitness_demo`; default `false` |
 | `PORT` | Supplied by Render, normally `10000`; do not hardcode a different port |
 
 No `DEMO_STAFF_PASSWORD` or bootstrap password is required by normal runtime. Existing staff accounts retain their existing passwords. Do not reset accounts or run `seed:admin` against an existing database to make a deployment work.
+
+## One-click public demo login
+
+Use the **same existing `warrior_fitness_demo` database** for both your normal Admin sign-in and public demo visitors. Do not create a second preview database, reset accounts, reseed or copy credentials into React/Vercel. The original email/password form remains available. The secondary **Try Demo — Explore Warrior Fitness** button calls `POST /api/auth/demo-login` without sending staff credentials and opens the existing dashboard.
+
+- The server flag above must be explicitly `true`. Every demo sign-in and authenticated demo request verifies the actual connected database identity; disabled, disconnected, unknown or different databases refuse access. Normal Admin authentication is unaffected.
+- Provisioning inserts only the reserved viewer identity with a server-owned immutable `isDemoViewer` marker. It uses `$setOnInsert`, verifies the reserved ID/email/marker, refuses collisions and never replaces another staff account. The identity has no usable shared password and cannot use password login or be edited through Staff Management.
+- Demo sessions use the existing eight-hour HttpOnly cookie, production Secure/SameSite settings, exact frontend Origin checks and JWT session-version validation. The public endpoint permits 15 attempts per IP per 15 minutes, including successes; its memory limiter is process-local.
+- The `ADMIN` role enables existing read-only reporting pages; it does not grant the viewer write access. Authentication rejects **all business mutation methods** before handlers run. Only explicitly audited GET/HEAD paths are allowed; unknown GETs fail closed. See [public demo verification](sprints/public-demo.md) for the route audit. Read-only UI controls supplement, rather than replace, this backend restriction.
+- A separate `public_demo_sessions` collection in the same demo database stores per-visitor session digests and eight-hour expiries, with a TTL index. Demo logout removes only that visitor's session. Other visitors and normal Admin sessions remain valid. Ordinary Admin logout retains its existing all-sessions revocation behavior. The model cannot auto-create collections/indexes in normal databases.
+- Reads do not simulate notifications, create invoices, check members in, post retail sales, lock financial days or finalize closings. Notification scheduling should remain disabled for the published demo.
+
+For local development, use the existing private `server/.env`: its `MONGODB_URI` must target the already populated `warrior_fitness_demo`. Reuse the working private connection settings without changing database passwords. Keep the current JWT secret and Admin accounts. Enable:
+
+```dotenv
+DEMO_PUBLIC_LOGIN_ENABLED=true
+```
+
+Ordinary startup requires only these two terminals:
+
+```powershell
+# backend terminal
+cd server
+npm run dev
+
+# frontend terminal
+cd client
+npm run dev
+```
+
+Only one Warrior Fitness backend should listen on port 5000. Stop a confirmed stale project process before restarting; never terminate unrelated applications. The frontend stays on port 5173 and proxies `/api` to `127.0.0.1:5000`. Open `http://localhost:5173/login`: Sign In uses existing staff credentials; Try Demo uses the existing read-only viewer. No database switching, reseeding, password reset or separate provisioning command is required. The endpoint retains collision-safe idempotent provisioning for a deliberately configured empty viewer slot, but the current viewer already exists. For Render use the normal `npm start`, not a seeder or development launcher.
+
+Publish only fictional demo data. Authenticated hosted login/cookies and strict third-party-cookie behavior still require the deployment smoke checks below; no deployment is performed by this task.
 
 ## Render backend: exact steps
 
@@ -93,6 +127,6 @@ Actual hosted login, HTTPS cookies, account access and deep-link routing must be
 
 ## Seeder and recovery
 
-The full instructions remain in [sprints/demo-data.md](sprints/demo-data.md). The seeder is dry-run by default, requires `--apply`, refuses production mode/wrong database identity and does not wipe history. `npm run dev:demo` is a localhost development launcher, **not** the Render start command. Host the populated demo database with normal `npm start` and the explicit private runtime URI instead.
+The optional seeder instructions remain in [sprints/demo-data.md](sprints/demo-data.md). It is dry-run by default, requires `--apply`, refuses production mode/wrong database identity and does not wipe history. Never run it as part of ordinary startup or deployment. Development uses `npm run dev`; Render uses `npm start`, both reading their normal environment configuration and the existing database.
 
 For a failed deploy, inspect sanitized build/health logs and correct configuration, or use the provider's previous deployment rollback. Never use a seed/reset or financial-data rewrite as a deployment recovery step. Scheduler execution is process-bound, statuses remain SIMULATED and live financial failure/concurrency guarantees remain outside this portfolio/demo release.

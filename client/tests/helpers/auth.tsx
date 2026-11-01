@@ -27,6 +27,7 @@ export function authState(role: StaffRole | null, overrides: Partial<AuthContext
     loading: false,
     login: vi.fn<AuthContextValue["login"]>().mockResolvedValue(undefined),
     logout: vi.fn<AuthContextValue["logout"]>().mockResolvedValue(undefined),
+    loginDemo: vi.fn<AuthContextValue["loginDemo"]>().mockResolvedValue(undefined),
     ...overrides,
   };
 }

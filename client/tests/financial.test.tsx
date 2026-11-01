@@ -227,3 +227,23 @@ describe("closing history", () => {
     await waitFor(() => expect(financialApi.getClosings).toHaveBeenLastCalledWith({ from: "2026-01-01", to: "2026-01-15", page: 1, limit: 20 }, expect.any(AbortSignal)));
   });
 });
+
+
+describe("public demo financial read-only controls", () => {
+  it("keeps the expense ledger and filters available without a record-expense form", async () => {
+    const value = authState("ADMIN"); value.staff = { ...value.staff!, readOnly: true };
+    renderWithAuth(<ExpenseManagementPage />, value);
+    await waitFor(() => expect(financialApi.getExpenses).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("form", { name: "Expense filters" })).toBeInTheDocument();
+    expect(screen.queryByRole("form", { name: "Record expense" })).not.toBeInTheDocument();
+    expect(financialApi.createExpense).not.toHaveBeenCalled();
+  });
+  it("reads cash reconciliation but disables finalization, including a direct form submit", async () => {
+    const value = authState("ADMIN"); value.staff = { ...value.staff!, readOnly: true };
+    renderWithAuth(<DailyCashClosingPage />, value);
+    const form = await screen.findByRole("form", { name: "Finalize daily closing" });
+    expect(screen.getByRole("button", { name: "Finalize closing" })).toBeDisabled();
+    fireEvent.submit(form); expect(financialApi.closeDay).not.toHaveBeenCalled();
+    expect(financialApi.getDay).toHaveBeenCalledTimes(1);
+  });
+});

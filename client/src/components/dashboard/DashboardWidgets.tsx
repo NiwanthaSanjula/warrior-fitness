@@ -39,14 +39,14 @@ const metricTones = {
 export function MetricCard<T>({ title, icon: Icon, resource, children, tone = "orange" }: {
   title: string; icon: LucideIcon; resource: DashboardResource<T>; children: (data: T) => ReactNode; tone?: keyof typeof metricTones;
 }) {
-  return <article aria-label={title} className={`min-w-0 rounded-2xl border p-5 shadow-lg ${metricTones[tone]}`}>
-    <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold text-zinc-200">{title}</h3><span className="metric-icon shrink-0 rounded-xl p-2.5 ring-1"><Icon aria-hidden="true" size={20} /></span></div>
+  return <article aria-label={title} className={`min-h-[88px] min-w-0 rounded-xl border px-3 py-2.5 shadow-lg [&_[role=status]]:space-y-1 [&_[role=status]]:py-1 [&_[role=status]>div]:h-6 ${metricTones[tone]}`}>
+    <div className="flex items-start justify-between gap-2"><h3 className="text-xs font-semibold leading-4 text-zinc-200">{title}</h3><span className="metric-icon shrink-0 rounded-md p-1 ring-1"><Icon aria-hidden="true" size={22} /></span></div>
     <ResourceContent resource={resource} label={title}>{children}</ResourceContent>
   </article>;
 }
 
-export function MetricValue({ value, detail }: { value: string; detail: string }) {
-  return <><p className="mt-3 break-words text-[clamp(1.75rem,2.2vw,2.25rem)] font-bold tracking-tight text-white">{value}</p>{detail && <p className="mt-1 text-xs text-zinc-300">{detail}</p>}</>;
+export function MetricValue({ value, detail }: { value: string; detail?: string }) {
+  return <><p className="mt-0.5 break-words text-[clamp(1.75rem,2.2vw,2rem)] leading-8 font-bold tracking-tight text-white">{value}</p>{detail && <p className="mt-0.5 text-xs leading-4 text-zinc-300">{detail}</p>}</>;
 }
 
 export function DashboardPanel<T>({ title, description, resource, action, children }: {

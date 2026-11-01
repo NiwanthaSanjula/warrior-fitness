@@ -11,6 +11,7 @@ declare global {
         email: string;
         role: StaffRole;
         permissions: Permission[];
+        readOnly?: boolean;
       };
     }
   }

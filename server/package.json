@@ -10,8 +10,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed:admin": "tsx src/scripts/seedAdmin.ts",
-    "seed:demo": "tsx src/scripts/seedDemo.ts",
-    "dev:demo": "tsx src/scripts/runDemoServer.ts"
+    "seed:demo": "tsx src/scripts/seedDemo.ts"
   },
   "keywords": [],
   "author": "",

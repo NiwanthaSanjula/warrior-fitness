@@ -16,6 +16,7 @@ export interface IStaff {
   isActive: boolean;
   permissions?: Permission[];
   sessionVersion?: number;
+  isDemoViewer?: boolean;
 }
 
 const staffSchema = new Schema<IStaff>(
@@ -60,6 +61,7 @@ const staffSchema = new Schema<IStaff>(
       min: 0,
       validate: Number.isSafeInteger,
     },
+    isDemoViewer: { type: Boolean, default: false, immutable: true },
   },
   {
     timestamps: true,
@@ -81,5 +83,6 @@ export function toPublicStaff(
     role: staff.role,
     isActive: staff.isActive,
     permissions: effectivePermissions(staff),
+    ...(staff.isDemoViewer === true ? { readOnly: true as const } : {}),
   };
 }

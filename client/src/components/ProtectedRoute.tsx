@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 
 import gymLogo from "../assets/LOGO.png";
 import { useAuth } from "../auth/auth-context";
-import { canUseFrontDesk, hasPermissions, type Permission } from "../auth/permissions";
+import { canMutate, canUseFrontDesk, hasPermissions, type Permission } from "../auth/permissions";
 import { equipmentLoginReturn } from "../utils/equipment";
 
 function LoadingScreen() {
@@ -74,4 +74,9 @@ export function PermissionRoute({ permissions, children }: { permissions: Permis
 export function FrontDeskRoute({ children }: { children: ReactNode }) {
   const { staff } = useAuth();
   return canUseFrontDesk(staff) ? children : <Navigate to="/dashboard" replace />;
+}
+
+export function MutationRoute({ children }: { children: ReactNode }) {
+  const { staff } = useAuth();
+  return canMutate(staff) ? children : <Navigate to="/dashboard" replace />;
 }

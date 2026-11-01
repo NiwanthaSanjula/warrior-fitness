@@ -58,13 +58,14 @@ npm run seed:demo -- --apply
 
 `--check` explicitly loads the ignored local demo file, connects using `DEMO_MONGODB_URI`, verifies the actual database identity and transaction-capable topology, and checks first-use emptiness/ownership using reads only. It cannot prove write privileges or real transaction behavior without performing writes. `--apply` repeats those checks before any collection/index creation or record write. No flag permits another database, forced cleanup or bypass of these checks. A conflicting or combined flag is rejected; default execution cannot write.
 
-### Display the data in the normal frontend
+### Display the existing data in the normal frontend
 
-1. Stop the ordinary backend on port 5000 before seeding and leave it stopped while the demo API is used. Do not run the demo API while a seed is incomplete or in progress.
-2. Complete `--check` and `--apply` successfully. Do not open the frontend against a failed demo startup or an ordinary backend still occupying the port.
-3. From `server/`, run `npm run dev:demo`. Wait for the message naming the verified `warrior_fitness_demo` database and the local API port.
-4. From `client/` in another terminal, run `npm run dev` and open `http://localhost:5173`.
-5. Sign out of any previous session, then sign in with one of the demo emails below and the initial password you set locally.
+1. The database is already populated; do not run the seeder again for ordinary development. Configure the normal ignored `server/.env` to use its existing private `warrior_fitness_demo` connection and keep notification scheduling disabled.
+2. From `server/`, run `npm run dev`. Wait for `MongoDB connected: warrior_fitness_demo` and the API listening on port 5000.
+3. From `client/` in another terminal, run `npm run dev` and open `http://localhost:5173`.
+4. Use Sign In with existing staff credentials, or Try Demo for the read-only viewer when `DEMO_PUBLIC_LOGIN_ENABLED=true` in the normal backend `.env`.
+
+The historical separate demo launcher described in the original population evidence has been removed. The seeder remains an optional utility with its own explicit safety checks; neither its configuration nor commands are required by normal startup.
 
 | Email | Access |
 | --- | --- |
@@ -169,9 +170,9 @@ Live seed commits, index creation and persisted financial/stock/count reconcilia
 
 | File | Purpose |
 | --- | --- |
-| `server/package.json` | Adds `seed:demo` and safe `dev:demo` commands; no dependency changes |
+| `server/package.json` | Retains optional `seed:demo`; normal startup is `npm run dev`; the historical special launcher was removed |
 | `server/src/scripts/seedDemo.ts` | Dry-run/check/apply CLI, sanitized reporting and disconnect |
-| `server/src/scripts/runDemoServer.ts` | Normal application pointed explicitly at the verified complete demo dataset |
+| `server/src/scripts/runDemoServer.ts` | Historical launcher, removed during final simplification; runtime now uses the ordinary `server/src/server.ts` and `.env` |
 | `server/src/scripts/demo/demo.config.ts` | Explicit ignored configuration, CLI flags, exact target policy and error sanitization |
 | `server/src/scripts/demo/demo.connection.ts` | Read-only connection/identity/topology/first-use ownership checks |
 | `server/src/scripts/demo/demo.plan.ts` | Deterministic fictional dataset, Colombo-relative dates, references and financial expectations |

@@ -33,18 +33,18 @@ export async function revokeStaffSessions(staffId: string, version: number): Pro
 // Shared security-write boundary, also used by audited Staff Management edits.
 // Do not update these fields through save(), raw updates, or native MongoDB writes.
 export async function updateStaffSecurity(
-  actor: { role: StaffRole },
+  actor: { role: StaffRole; readOnly?: boolean },
   staffId: string,
   expectedVersion: number,
   change: StaffSecurityChange,
   session?: ClientSession
 ) {
-  if (actor.role !== "ADMIN") throw new AppError(403, "You do not have permission");
+  if (actor.role !== "ADMIN" || actor.readOnly) throw new AppError(403, "You do not have permission");
   const parsed = securityChangeSchema.safeParse(change);
   if (!parsed.success) throw new AppError(400, "Invalid staff security changes");
   const { permissions, ...fields } = parsed.data;
   const staff = await Staff.findOneAndUpdate(
-    versionFilter(staffId, expectedVersion),
+    { ...versionFilter(staffId, expectedVersion), isDemoViewer: { $ne: true } },
     {
       $set: { ...fields, ...(permissions !== undefined && permissions !== null ? { permissions } : {}) },
       ...(permissions === null ? { $unset: { permissions: 1 } } : {}),

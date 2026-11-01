@@ -45,6 +45,7 @@ export async function mutateStaff(actor: Actor, staffId: string, expectedVersion
   return transaction(async (session) => {
     const current = await Staff.findById(staffId).session(session);
     if (!current) throw new AppError(404, "Staff account not found");
+    if (current.isDemoViewer === true) throw new AppError(409, "The public demo identity cannot be edited through Staff Management.");
     if ((current.sessionVersion ?? 0) !== expectedVersion) throw new AppError(409, "Staff account changed. Refresh before trying again.");
     // No role-change endpoint exists. All Admin activation/permission edits are
     // rejected, so even concurrent requests cannot disable/demote the last Admin.

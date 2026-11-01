@@ -19,6 +19,10 @@ import {
 import { revokeStaffSessions } from "./staff-security.service.js";
 
 import { requireAuth } from "../../middlewares/auth.middleware.js";
+import { env } from "../../config/env.js";
+import { startDemoSession } from "./demo-login.service.js";
+import { publicDemoAvailable, DEMO_VIEWER_ID } from "./demo-access.js";
+import { DemoSession, demoSessionDigest } from "./demo-session.model.js";
 
 export const authRouter = Router();
 
@@ -58,7 +62,7 @@ authRouter.post("/login", loginLimiter, async (req, res) => {
     email,
   }).select("+passwordHash");
 
-  if (!staff || !staff.isActive) {
+  if (!staff || !staff.isActive || staff.isDemoViewer === true) {
     res.status(401).json({
       success: false,
       message: "Invalid email or password",
@@ -93,6 +97,26 @@ authRouter.post("/login", loginLimiter, async (req, res) => {
   });
 });
 
+const demoLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, limit: 15,
+  standardHeaders: "draft-7", legacyHeaders: false,
+  message: { success: false, message: "Too many demo sign-ins. Please try again later." },
+});
+
+authRouter.post("/demo-login", demoLoginLimiter, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (req.get("Origin") !== env.CLIENT_URL) {
+    res.status(403).json({ success: false, message: "Request origin is not permitted." });
+    return;
+  }
+  // No input fields can choose an identity, permissions, mode or database.
+  const { viewer, sessionId } = await startDemoSession();
+  res.cookie(AUTH_COOKIE_NAME, createAuthToken(viewer.id, viewer.sessionVersion ?? 0, sessionId), {
+    ...authCookieOptions, maxAge: getAuthCookieMaxAge(),
+  });
+  res.status(200).json({ success: true, message: "Demo Mode — Read Only", staff: toPublicStaff(viewer) });
+});
+
 // GET /api/auth/me
 authRouter.get("/me", requireAuth, (req, res) => {
   res.status(200).json({
@@ -108,7 +132,11 @@ authRouter.post("/logout", async (req, res) => {
   if (typeof token === "string") {
     try { session = verifyAuthToken(token); } catch { /* Clearing an unavailable session remains idempotent. */ }
   }
-  if (session) await revokeStaffSessions(session.staffId, session.sessionVersion);
+  if (session?.demoSessionId) {
+    if (publicDemoAvailable() && session.staffId === DEMO_VIEWER_ID) {
+      await DemoSession.deleteOne({ _id: demoSessionDigest(session.demoSessionId), staff: session.staffId });
+    }
+  } else if (session) await revokeStaffSessions(session.staffId, session.sessionVersion);
   res.clearCookie(
     AUTH_COOKIE_NAME,
     authCookieOptions

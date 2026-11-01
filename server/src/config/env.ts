@@ -38,6 +38,8 @@ export const envSchema = z.object({
 
   NOTIFICATION_SCHEDULER_ENABLED: z.enum(["true", "false"])
     .default("false").transform(value => value === "true"),
+  DEMO_PUBLIC_LOGIN_ENABLED: z.enum(["true", "false"])
+    .default("false").transform(value => value === "true"),
 }).superRefine((values, context) => {
   if (values.NODE_ENV === "production" && !values.CLIENT_URL.startsWith("https://")) {
     context.addIssue({ code: "custom", path: ["CLIENT_URL"], message: "Production CLIENT_URL must use HTTPS" });

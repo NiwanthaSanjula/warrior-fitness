@@ -151,7 +151,7 @@ describe("atomic security-write service for future staff management", () => {
     const staff = staffFixture("RECEPTIONIST", { sessionVersion: 6 });
     const update = vi.spyOn(Staff, "findOneAndUpdate").mockResolvedValue(staff);
     await updateStaffSecurity(admin, staff.id, 5, change as StaffSecurityChange);
-    expect(update).toHaveBeenCalledWith({ _id: staff.id, sessionVersion: 5 }, { $set: change, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true });
+    expect(update).toHaveBeenCalledWith({ _id: staff.id, sessionVersion: 5, isDemoViewer: { $ne: true } }, { $set: change, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true });
   });
 
   it("deactivate/reactivate never restores tokens from before deactivation", async () => {
@@ -175,9 +175,9 @@ describe("atomic security-write service for future staff management", () => {
     const staff = staffFixture("RECEPTIONIST");
     const update = vi.spyOn(Staff, "findOneAndUpdate").mockResolvedValue(staff);
     await updateStaffSecurity(admin, staff.id, 1, { permissions: [] });
-    expect(update).toHaveBeenLastCalledWith({ _id: staff.id, sessionVersion: 1 }, { $set: { permissions: [] }, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true });
+    expect(update).toHaveBeenLastCalledWith({ _id: staff.id, sessionVersion: 1, isDemoViewer: { $ne: true } }, { $set: { permissions: [] }, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true });
     await updateStaffSecurity(admin, staff.id, 2, { permissions: null });
-    expect(update).toHaveBeenLastCalledWith({ _id: staff.id, sessionVersion: 2 }, { $set: {}, $unset: { permissions: 1 }, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true });
+    expect(update).toHaveBeenLastCalledWith({ _id: staff.id, sessionVersion: 2, isDemoViewer: { $ne: true } }, { $set: {}, $unset: { permissions: 1 }, $inc: { sessionVersion: 1 } }, { new: true, runValidators: true });
   });
 
   it("rejects a stale concurrent update rather than overwriting newer security settings", async () => {

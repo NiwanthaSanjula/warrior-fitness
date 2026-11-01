@@ -64,7 +64,7 @@ export default function PlansPage() {
   const { staff } = useAuth();
   const location = useLocation();
 
-  const isAdmin = staff?.role === "ADMIN";
+  const isAdmin = staff?.role === "ADMIN" && staff.readOnly !== true;
 
   const [search, setSearch] = useState("");
 

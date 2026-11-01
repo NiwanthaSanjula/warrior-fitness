@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { RefreshCw, ShieldCheck, UserPlus } from "lucide-react";
 import { staffApi } from "../api/staff.api";
 import { useAuth } from "../auth/auth-context";
-import { hasPermissions } from "../auth/permissions";
+import { canMutate, hasPermissions } from "../auth/permissions";
 import { useDashboardResource } from "../hooks/useDashboardResource";
 import { DashboardPanel, EmptyQueue } from "../components/dashboard/DashboardWidgets";
 import { CreateStaffForm, StaffEditor } from "../components/staff/StaffForms";
@@ -42,7 +42,7 @@ export default function StaffManagementPage() {
   return <div className="space-y-6">
     <header className="flex flex-wrap items-start justify-between gap-5 rounded-2xl border border-white/10 border-t-orange-500/50 bg-gym-card p-5 sm:p-7">
       <div><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-orange-400"><ShieldCheck aria-hidden="true" size={16} /> People & access</p><h1 className="mt-3 text-2xl font-black text-white sm:text-3xl">Staff Management</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-gym-muted">Manage staff accounts, front-desk permissions and session security. Every applied change is recorded in staff audit history.</p></div>
-      <div className="flex flex-wrap gap-3"><button className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 px-4 text-sm font-bold" onClick={() => setVersion((value) => value + 1)}><RefreshCw aria-hidden="true" size={16} />Refresh staff</button><button className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gym-orange px-4 text-sm font-bold text-white hover:bg-orange-600" onClick={() => { setCreating(true); setSelectedId(null); setAuditPage(1); setNotice(""); }}><UserPlus aria-hidden="true" size={17} />Create Receptionist</button></div>
+      <div className="flex flex-wrap gap-3"><button className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 px-4 text-sm font-bold" onClick={() => setVersion((value) => value + 1)}><RefreshCw aria-hidden="true" size={16} />Refresh staff</button><button disabled={!canMutate(staff)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gym-orange px-4 text-sm font-bold text-white hover:bg-orange-600" onClick={() => { setCreating(true); setSelectedId(null); setAuditPage(1); setNotice(""); }}><UserPlus aria-hidden="true" size={17} />Create Receptionist</button></div>
     </header>
     {notice && <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">{notice}</p>}
     <div className="grid items-start gap-5 xl:grid-cols-2">
@@ -62,7 +62,7 @@ export default function StaffManagementPage() {
         </>}</DashboardPanel>
       </div>
       <div className="space-y-5">
-        {creating ? <CreateStaffForm cancel={() => setCreating(false)} created={(person) => { setCreating(false); setSelectedId(person.id); changed("Receptionist created with default permissions. Share the initial password securely."); }} /> : selectedId ? <DashboardPanel title="Selected staff account" description="Changes require confirmation and use the latest account version." resource={detail}>{(result) => <StaffEditor key={`${result.staff.id}:${result.staff.version}`} target={result.staff} catalogue={catalogue} changed={changed} />}</DashboardPanel> : <section className="rounded-2xl border border-dashed border-white/15 bg-gym-card p-8 text-center"><ShieldCheck aria-hidden="true" className="mx-auto text-gym-orange" size={32} /><h2 className="mt-4 text-lg font-bold">Choose a staff account</h2><p className="mt-2 text-sm leading-6 text-gym-muted">Select Manage to edit a profile, review permissions or reset a password. Admin roles and activation are protected.</p></section>}
+        {creating ? <CreateStaffForm cancel={() => setCreating(false)} created={(person) => { setCreating(false); setSelectedId(person.id); changed("Receptionist created with default permissions. Share the initial password securely."); }} /> : selectedId ? <DashboardPanel title="Selected staff account" description="Changes require confirmation and use the latest account version." resource={detail}>{(result) => <fieldset disabled={!canMutate(staff) || result.staff.readOnly}><StaffEditor key={`${result.staff.id}:${result.staff.version}`} target={result.staff} catalogue={catalogue} changed={changed} /></fieldset>}</DashboardPanel> : <section className="rounded-2xl border border-dashed border-white/15 bg-gym-card p-8 text-center"><ShieldCheck aria-hidden="true" className="mx-auto text-gym-orange" size={32} /><h2 className="mt-4 text-lg font-bold">Choose a staff account</h2><p className="mt-2 text-sm leading-6 text-gym-muted">Select Manage to edit a profile, review permissions or reset a password. Admin roles and activation are protected.</p></section>}
       </div>
     </div>
     <DashboardPanel title={selectedId ? "Selected staff audit history" : "Recent staff activity"} description="Successful committed changes only. Passwords, hashes, credentials and request bodies are never recorded." resource={audit} action={selectedId ? <button className="text-xs font-bold text-orange-400" onClick={() => { setSelectedId(null); setAuditPage(1); }}>Show all staff activity</button> : undefined}>{(result) => <>

@@ -79,6 +79,13 @@ export function AuthProvider({
     if (revision === authRevision.current) setStaff(response.staff);
   }
 
+  // Public read-only demo login
+  async function loginDemo(): Promise<void> {
+    const revision = ++authRevision.current;
+    const response = await authApi.loginDemo();
+    if (revision === authRevision.current) setStaff(response.staff);
+  }
+
   // Staff logout
   async function logout(): Promise<void> {
     const revision = ++authRevision.current;
@@ -94,6 +101,7 @@ export function AuthProvider({
         loading,
         login,
         logout,
+        loginDemo,
       }}
     >
       {children}
