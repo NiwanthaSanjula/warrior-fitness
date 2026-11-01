@@ -4,6 +4,7 @@ import { Expense, type IExpense } from "../src/modules/financial/expense.model.j
 import { CashClosing, type ICashClosing } from "../src/modules/financial/cash-closing.model.js";
 import { FinancialDay } from "../src/modules/financial/financial-day.model.js";
 import { Payment } from "../src/modules/billing/payment.model.js";
+import { RetailSale } from "../src/modules/retail/retail.model.js";
 import { financialTransaction, lockOpenFinancialDay } from "../src/modules/financial/financial-day.service.js";
 import { closeDay, createExpense, listClosings, listExpenses, previewDay } from "../src/modules/financial/financial.service.js";
 
@@ -25,6 +26,8 @@ beforeEach(() => {
   vi.spyOn(FinancialDay, "updateOne").mockResolvedValue({ acknowledged: true, modifiedCount: 1, matchedCount: 1, upsertedCount: 0, upsertedId: null });
   vi.spyOn(Payment, "aggregate").mockReturnValue(sessionResult([{ _id: "CASH", amountLkr: 10000, count: 2 }, { _id: "BANK_TRANSFER", amountLkr: 50000, count: 1 }, { _id: "CARD", amountLkr: 25000, count: 1 }]));
   vi.spyOn(Expense, "aggregate").mockReturnValue(sessionResult([{ _id: "CASH", amountLkr: 2000, count: 1 }]));
+  // Existing membership-only scenarios explicitly have no retail ledger entries.
+  vi.spyOn(RetailSale, "aggregate").mockReturnValue(sessionResult([]));
   // The isolation setup spies on the shared Model.save implementation. Mock it
   // once and dispatch by model so expense/closing fixtures cannot overwrite it.
   vi.spyOn(mongoose.Model.prototype, "save").mockImplementation(async function (this: HydratedDocument<IExpense> | HydratedDocument<ICashClosing>) {

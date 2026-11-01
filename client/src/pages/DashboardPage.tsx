@@ -81,7 +81,7 @@ export default function DashboardPage() {
         {canReport && <MetricCard title="Active memberships" icon={Users} resource={active}>{(data) => <MetricValue value={formatCount(data.summary.totalActiveMembers)} detail={`Active members with valid coverage · ${formatGymDate(data.asOfDate)}`} />}</MetricCard>}
         {canReport && <MetricCard title="Today's collections" icon={Wallet} resource={collections}>{(data) => {
           const day = data.byDay.find((item) => item.date === today);
-          return day ? <MetricValue value={formatLkr(day.totalCollectedLkr)} detail={`${formatCount(day.paymentCount)} payments received today`} /> : <p className="mt-4 text-sm text-amber-300">Today's collection total was not returned.</p>;
+          return day ? <MetricValue value={formatLkr(day.totalCollectedLkr)} detail={`${formatCount(day.paymentCount)} membership payments received today · POS collections in Retail`} /> : <p className="mt-4 text-sm text-amber-300">Today's collection total was not returned.</p>;
         }}</MetricCard>}
         {canAttend && <MetricCard title="Today's attendance" icon={ClipboardCheck} resource={attendance}>{({ data }) => <MetricValue value={formatCount(data.totalCheckIns)} detail={`Check-ins · ${formatGymDate(data.date)}`} />}</MetricCard>}
         {canReport ? <>
@@ -96,7 +96,7 @@ export default function DashboardPage() {
       </section>}
 
       {(canReport || canAttend) && <div className="grid gap-4 xl:grid-cols-2">
-        {canReport && <DashboardPanel title="7-day collections" description="Payments received, including today. Not profit or invoice issuance." resource={collections} action={<WorkflowLink to="/reports">Reports</WorkflowLink>}>{(data) => <><p className="mb-5 text-2xl font-black text-white">{formatLkr(data.summary.totalCollectedLkr)} <span className="text-xs font-normal text-gym-muted">collected over 7 days</span></p><TrendChart label="7-day collections trend" money data={data.byDay.map((day) => ({ date: day.date, value: day.totalCollectedLkr }))} /></>}</DashboardPanel>}
+        {canReport && <DashboardPanel title="7-day collections" description="Membership payments received, including today. POS collections are in Retail; combined collections are in Daily Cash Closing." resource={collections} action={<WorkflowLink to="/reports">Reports</WorkflowLink>}>{(data) => <><p className="mb-5 text-2xl font-black text-white">{formatLkr(data.summary.totalCollectedLkr)} <span className="text-xs font-normal text-gym-muted">collected over 7 days</span></p><TrendChart label="7-day collections trend" money data={data.byDay.map((day) => ({ date: day.date, value: day.totalCollectedLkr }))} /></>}</DashboardPanel>}
         {canAttend && <DashboardPanel title="7-day attendance" description="Daily check-ins across the last seven gym calendar dates." resource={attendance} action={<WorkflowLink to="/attendance">Attendance</WorkflowLink>}>{({ data }) => <TrendChart label="7-day attendance trend" data={data.last7Days.map((day) => ({ date: day.date, value: day.checkIns }))} />}</DashboardPanel>}
       </div>}
 

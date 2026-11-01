@@ -7,10 +7,12 @@ import { initializeStaffAdministration } from "./modules/staff/staff.service.js"
 import { initializeNotificationModels } from "./modules/notifications/notification.model.js";
 import { startNotificationScheduler } from "./modules/notifications/notification.scheduler.js";
 import { initializeEquipmentModels } from "./modules/equipment/equipment.model.js";
+import { initializeRetailModels } from "./modules/retail/retail.model.js";
 
 async function startServer(): Promise<void> {
   try {
     await connectDatabase();
+    await initializeRetailModels();
     await initializeFinancialModels();
     await initializeStaffAdministration();
     await initializeNotificationModels();

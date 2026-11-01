@@ -9,6 +9,7 @@ import { CashClosing, publicClosing, type DayTotals, type ICashClosing } from ".
 import { FinancialDay } from "./financial-day.model.js";
 import { financialTransaction, lockOpenFinancialDay } from "./financial-day.service.js";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "./financial.constants.js";
+import { RetailSale } from "../retail/retail.model.js";
 import type { ExpenseInput, ClosingInput, expenseQuerySchema, closingQuerySchema } from "./financial.validation.js";
 
 type Actor = { id: string; fullName: string };
@@ -20,6 +21,9 @@ export function reconcileCash(opening: number, actual: number, totals: DayTotals
   const varianceLkr = actual - expectedCashLkr;
   if (![opening, actual, expectedCashLkr, varianceLkr, ...Object.values(totals.collections), ...Object.values(totals.expenses)].every(Number.isSafeInteger)) {
     throw new AppError(400, "Financial amounts exceed safe whole-number LKR limits");
+  }
+  if (totals.membershipCollections || totals.retailCollections) {
+    if (!totals.membershipCollections || !totals.retailCollections || !PAYMENT_METHODS.every(method => Number.isSafeInteger(totals.membershipCollections![method]) && Number.isSafeInteger(totals.retailCollections![method]) && totals.membershipCollections![method] + totals.retailCollections![method] === totals.collections[method])) throw new AppError(400, "Collection sources do not reconcile to the combined total");
   }
   return { expectedCashLkr, varianceLkr };
 }
@@ -55,11 +59,14 @@ export async function ledgerTotals(date: string, session: ClientSession): Promis
   const expenses = await Expense.aggregate<MethodGroup>([
     { $match: { expenseDate: date } }, group,
   ]).session(session);
+  const retail = await RetailSale.aggregate<MethodGroup>([{ $match: { date } }, group]).session(session);
   const totals: DayTotals = {
     collections: { CASH: 0, BANK_TRANSFER: 0, CARD: 0 },
     expenses: { CASH: 0, BANK_TRANSFER: 0, CARD: 0 }, paymentCount: 0, expenseCount: 0,
+    membershipCollections: { CASH: 0, BANK_TRANSFER: 0, CARD: 0 }, retailCollections: { CASH: 0, BANK_TRANSFER: 0, CARD: 0 }, retailSaleCount: 0,
   };
-  for (const row of payments) { totals.collections[row._id] = row.amountLkr; totals.paymentCount += row.count; }
+  for (const row of payments) { totals.membershipCollections![row._id] = row.amountLkr; totals.collections[row._id] = row.amountLkr; totals.paymentCount += row.count; }
+  for (const row of retail) { totals.retailCollections![row._id] = row.amountLkr; totals.collections[row._id] += row.amountLkr; totals.retailSaleCount! += row.count; }
   for (const row of expenses) { totals.expenses[row._id] = row.amountLkr; totals.expenseCount += row.count; }
   reconcileCash(0, 0, totals);
   return totals;

@@ -9,7 +9,7 @@ export async function lockOpenFinancialDay(date: string, session: ClientSession)
     { upsert: true, new: true, session },
   );
   if (!day || day.closed) {
-    throw new AppError(409, `Financial day ${date} is closed. No new payments or expenses may be recorded for it.`);
+    throw new AppError(409, `Financial day ${date} is closed. No new payments, retail sales or expenses may be recorded for it.`);
   }
   return day;
 }

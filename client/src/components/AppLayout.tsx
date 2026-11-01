@@ -29,6 +29,9 @@ import {
   ChevronDown,
   ShieldCheck,
   Wrench,
+  Store,
+  ShoppingCart,
+  Package,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -78,6 +81,14 @@ const menuItems: MenuEntry[] = [
       { label: "Expense Management", path: "/expenses", icon: ReceiptText, adminOnly: true, permissions: ["expenses.manage"] },
       { label: "Daily Cash Closing", path: "/cash-closing", icon: ClipboardCheck, adminOnly: true, permissions: ["cash-closings.manage"] },
       { label: "Closing History", path: "/closing-history", icon: History, adminOnly: true, permissions: ["cash-closings.manage"] },
+    ],
+  },
+  {
+    label: "POS & Retail", icon: Store, children: [
+      { label: "Point of Sale", path: "/retail/checkout", icon: ShoppingCart, permissions: ["retail.read", "retail.checkout"] },
+      { label: "Products & Inventory", path: "/retail/products", icon: Package, permissions: ["retail.read"] },
+      { label: "Retail Sales", path: "/retail/sales", icon: ReceiptText, permissions: ["retail.sales.read"] },
+      { label: "Retail Dashboard", path: "/retail", icon: BarChart3, adminOnly: true, permissions: ["retail.manage"] },
     ],
   },
   {
@@ -161,7 +172,7 @@ function GroupNavigation({ item, active, locationKey, onNavigate }: {
             <li key={child.path}>
               <NavLink
                 to={child.path}
-                end={child.path === "/equipment"}
+                end={child.path === "/equipment" || child.path === "/retail"}
                 onClick={onNavigate}
                 className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-gym-orange ${
                   isActive ? "bg-gym-orange text-white shadow-lg shadow-orange-600/10" : "text-zinc-400 hover:bg-white/5 hover:text-white"
