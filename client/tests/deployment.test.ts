@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveApiBaseUrl } from "../src/api/api-url";
 
@@ -40,40 +41,29 @@ describe("deployment API base URL", () => {
 });
 
 describe("Vercel frontend routing configuration", () => {
-  async function configuration(origin = "https://warrior-api.example.test") {
-    vi.stubEnv("BACKEND_ORIGIN", origin);
-    vi.resetModules();
-    return (await import("../vercel")).config;
-  }
+  const config = JSON.parse(readFileSync(`${process.cwd()}/vercel.json`, "utf8")) as {
+    framework: string;
+    outputDirectory: string;
+    rewrites: Array<{ source: string; destination: string }>;
+  };
 
-  it("proxies /api before the SPA fallback, preserving the existing backend prefix", async () => {
-    const config = await configuration();
+  it("defines a destination for every rewrite and proxies /api before the SPA fallback", () => {
+    for (const rule of config.rewrites) expect(rule.destination).toEqual(expect.any(String));
     expect(config.rewrites).toEqual([
-      { source: "/api/:path*", destination: "https://warrior-api.example.test/api/:path*" },
+      { source: "/api/:path*", destination: "https://warrior-fitness-nine.vercel.app/api/:path*" },
       { source: "/(.*)", destination: "/index.html" },
     ]);
     expect(config.framework).toBe("vite");
     expect(config.outputDirectory).toBe("dist");
   });
 
-  it.each(["/dashboard", "/front-desk", "/members/fictional-id", "/retail/checkout", "/login"])("keeps SPA reload fallback available for %s", async path => {
-    const config = await configuration();
+  it.each(["/dashboard", "/front-desk", "/members/fictional-id", "/retail/checkout", "/login"])("keeps SPA reload fallback available for %s", path => {
     const fallback = config.rewrites.at(-1)!;
     expect(new RegExp(`^${fallback.source}$`).test(path)).toBe(true);
     expect(fallback.destination).toBe("/index.html");
   });
 
-  it("normalizes the configured origin and prevents API response caching", async () => {
-    const config = await configuration("https://warrior-api.example.test/");
-    expect(config.rewrites[0]!.destination).toBe("https://warrior-api.example.test/api/:path*");
-    expect(config.headers).toEqual([{ source: "/api/:path*", headers: [
-      { key: "Cache-Control", value: "no-store" },
-      { key: "CDN-Cache-Control", value: "no-store" },
-      { key: "x-vercel-enable-rewrite-caching", value: "0" },
-    ] }]);
-  });
-
-  it.each(["", "http://localhost:5000", "https://example.test/api", "https://fictional:private@example.test", "https://example.test?secret=x", "https://example.test#fragment"])("fails safely instead of routing to an invalid backend origin (%s)", async value => {
-    await expect(configuration(value)).rejects.toThrow(/Set BACKEND_ORIGIN/);
+  it("uses a single static JSON configuration without a dynamic routing file", () => {
+    expect(existsSync(`${process.cwd()}/vercel.ts`)).toBe(false);
   });
 });

@@ -92,7 +92,7 @@ Follow the exact environment tables and provider steps in [docs/deployment.md](d
 
 Both projects use branch `develop` and Node 24.x. The backend alone holds `NODE_ENV=production`, the exact HTTPS frontend `CLIENT_URL`, private `MONGODB_URI` selecting the already populated `warrior_fitness_demo`, and private `JWT_SECRET`. Set `DEMO_PUBLIC_LOGIN_ENABLED=true` and `NOTIFICATION_SCHEDULER_ENABLED=false`. No bootstrap credentials, seeding or new database are needed.
 
-After deploying the backend, set the frontend project's build-time `BACKEND_ORIGIN` to its actual HTTPS origin, without `/api`. `client/vercel.ts` forwards `/api/*` to that backend before the SPA fallback; browsers use same-origin `/api`. Leave `VITE_API_BASE_URL` unset (or `/api`); secrets never belong in frontend variables. The backend retains exact-origin checks and host-only HttpOnly/Secure cookies. The old `render.yaml` is unused by this deployment.
+The backend is at `https://warrior-fitness-nine.vercel.app`. Static `client/vercel.json` forwards `/api/*` to that backend before the SPA fallback; browsers use same-origin `/api`. No frontend routing environment variable is required. Leave `VITE_API_BASE_URL` unset (or `/api`); secrets never belong in frontend variables. The backend retains exact-origin checks and host-only HttpOnly/Secure cookies. The old `render.yaml` is unused by this deployment.
 
 The Vercel entry point shares database/index initialization across concurrent requests and reuses warm connection pools. It never starts the background scheduler or local listener. Both local `npm run dev` commands above remain unchanged. Provider proxy/cookie smoke checks are required after deployment; see the guide for the exact order and limitations.
 

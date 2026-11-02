@@ -35,23 +35,23 @@ No local `PORT`, bootstrap passwords, seeder or financial-test variables are nee
 
 ## Frontend environment and routing
 
-Set **`BACKEND_ORIGIN`** on the frontend project to the actual stable backend HTTPS origin assigned after its first deployment, **without `/api`**. This is build-time routing configuration. Remove any old absolute `VITE_API_BASE_URL`; leave it unset or set it to `/api`. Vite accepts the same-origin production setup and rejects an absolute URL on Vercel that would bypass the proxy.
+The existing backend is **`https://warrior-fitness-nine.vercel.app`**. No frontend routing environment variable is required. Remove any old absolute `VITE_API_BASE_URL`; leave it unset or set it to `/api`. Vite accepts the same-origin production setup and rejects an absolute URL on Vercel that would bypass the proxy.
 
-`client/vercel.ts` validates the backend origin and exports supported programmatic configuration without adding a dependency. It replaces `client/vercel.json`; only one config file exists. Rules run in this order:
+`client/vercel.json` is the only frontend deployment configuration. It contains plain static JSON with an explicit destination for each rewrite. Rules run in this order:
 
-1. `/api/:path*` forwards to the configured backend's `/api/:path*`, retaining the API prefix and query parameters.
+1. `/api/:path*` forwards to `https://warrior-fitness-nine.vercel.app/api/:path*`, retaining the API prefix and query parameters.
 2. `/(.*)` serves `/index.html` for React deep links. Existing built assets remain served normally.
 
-API responses are `no-store` and rewrite caching is disabled. Missing/invalid configuration fails with a sanitized error instead of using an invented URL. [Programmatic configuration](https://vercel.com/docs/project-configuration/vercel-ts), [external rewrites and caching](https://vercel.com/docs/routing/rewrites).
+The unchanged backend marks API responses `no-store`. No dynamic configuration or build-time URL substitution is used. [External rewrites](https://vercel.com/docs/routing/rewrites).
 
 ## Deployment order after review
 
 1. Approve and publish the reviewed source to `develop`. This preparation task does not commit, push or deploy.
 2. Choose the frontend project name and intended stable production origin for backend `CLIENT_URL`.
 3. Import the repository as the **backend**, root `server`, using the settings/environment above. Deploy with native Express. Use a public production deployment; an authentication-protected preview cannot be proxied by ordinary visitors.
-4. Record the backend's actual stable HTTPS origin. Verify `GET <backend-origin>/api/health` returns 200 and `database: connected`.
-5. Import the same repository as the **frontend**, root `client`. **Set `BACKEND_ORIGIN` to that backend origin**, then deploy. This is the single routing configuration step after the first backend deployment; no source URL edit is needed.
-6. Confirm backend `CLIENT_URL` matches the final assigned frontend production origin. If different from the intended origin, update it and redeploy the backend before testing login. Changes to `BACKEND_ORIGIN` require a frontend rebuild/redeploy.
+4. The backend is already available at `https://warrior-fitness-nine.vercel.app`; its health path is `/api/health`. No backend redeployment is needed for the frontend configuration fix.
+5. Import the same repository as the **frontend**, root `client`, and deploy. The static API rewrite already targets the existing backend; no routing environment variable is required.
+6. Confirm backend `CLIENT_URL` matches the final assigned frontend production origin before testing login. If it differs, the owner must update that backend environment value and redeploy it; the frontend configuration fix does not change backend settings.
 7. Complete the read-only smoke checks below. Never run seeders or submit financial entries to validate deployment.
 
 ## Cookies and authentication
@@ -95,6 +95,6 @@ Live Vercel proxy behavior, HTTPS cookies, deployment protection, Atlas networki
 
 ## Local startup and optional seeder
 
-Original commands remain unchanged: `cd server; npm run dev` and, in a second terminal, `cd client; npm run dev`. Backend reads private `server/.env`; Vite serves `http://localhost:5173` and proxies `/api` to `127.0.0.1:5000`. `BACKEND_ORIGIN` is needed only for hosted routing configuration, not ordinary local startup/build/tests.
+Original commands remain unchanged: `cd server; npm run dev` and, in a second terminal, `cd client; npm run dev`. Backend reads private `server/.env`; Vite serves `http://localhost:5173` and proxies `/api` to `127.0.0.1:5000`. Hosted API rewrites use the static frontend JSON configuration; no routing environment variable is needed.
 
 Preserve the populated database, Admin password and financial history. Optional [seeder instructions](sprints/demo-data.md) remain available; seed/reset/bootstrap commands must never be deployment build/start commands. `render.yaml` remains historical unused configuration; no Render service is needed.
