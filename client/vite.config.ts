@@ -7,8 +7,8 @@ import { resolveApiBaseUrl } from "./src/api/api-url.ts";
 export default defineConfig(({ mode }) => {
   const values = loadEnv(mode, process.cwd(), "VITE_");
   const baseUrl = resolveApiBaseUrl(values.VITE_API_BASE_URL, mode === "production");
-  if (process.env.VERCEL === "1" && mode === "production" && baseUrl === "/api") {
-    throw new Error("Set VITE_API_BASE_URL to the deployed HTTPS backend URL ending in /api before deploying to Vercel.");
+  if (process.env.VERCEL === "1" && mode === "production" && baseUrl !== "/api") {
+    throw new Error("Vercel uses same-origin /api requests. Unset VITE_API_BASE_URL or set it to /api.");
   }
   return {
   plugins: [react(), tailwindcss()],

@@ -2,7 +2,7 @@
 
 React + TypeScript + Vite, using the Warrior Fitness charcoal/orange interface.
 
-See the [root README](../README.md) for local setup and demo data, and [deployment guide](../docs/deployment.md) for Vercel/Render/Atlas configuration.
+See the [root README](../README.md) for local setup and demo data, and [deployment guide](../docs/deployment.md) for the two Vercel projects and existing Atlas database.
 
 From this directory:
 
@@ -14,4 +14,4 @@ npm run build
 npm run lint
 ```
 
-Local API requests use the Vite `/api` proxy. Set public `VITE_API_BASE_URL=https://YOUR_RENDER_HOST/api` in Vercel before deployment; keep database credentials, JWT secrets and passwords out of all frontend environment variables.
+Local API requests use the existing Vite `/api` proxy. On Vercel, set the build-time `BACKEND_ORIGIN` to the deployed backend's actual HTTPS origin without `/api`. `vercel.ts` forwards API requests before the SPA fallback. Leave `VITE_API_BASE_URL` unset or use `/api` so browser requests stay on the frontend origin. Never put database credentials, JWT secrets or passwords in frontend variables.

@@ -1,6 +1,6 @@
 // Vite replaces this public URL at build time. No credentials belong in it.
 export function resolveApiBaseUrl(value: string | undefined, production = false): string {
-  if (!value?.trim()) return "/api";
+  if (!value?.trim() || value.trim() === "/api") return "/api";
   try {
     const url = new URL(value.trim());
     const pathname = url.pathname.replace(/\/+$/, "");

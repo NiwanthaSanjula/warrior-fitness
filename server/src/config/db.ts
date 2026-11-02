@@ -2,12 +2,23 @@
 import mongoose from "mongoose";
 import { env } from "./env.js";
 
-export async function connectDatabase(): Promise<void> {
-  await mongoose.connect(env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000,
-  });
+let connectionPromise: Promise<void> | undefined;
 
-  console.log(`MongoDB connected: ${mongoose.connection.db?.databaseName ?? "unverified"}`);
+export function connectDatabase(): Promise<void> {
+  // Concurrent cold-start requests share one connection attempt. Keep the pool
+  // open for warm invocations, but allow a later request to retry a failed one.
+  if (connectionPromise) return connectionPromise;
+  if (mongoose.connection.readyState === 1) return Promise.resolve();
+
+  connectionPromise = mongoose.connect(env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    maxPoolSize: 10,
+  }).then(() => {
+    console.log(`MongoDB connected: ${mongoose.connection.db?.databaseName ?? "unverified"}`);
+  }).finally(() => {
+    connectionPromise = undefined;
+  });
+  return connectionPromise;
 }
 
 mongoose.connection.on("disconnected", () => {

@@ -81,18 +81,20 @@ git diff --check
 
 Vitest suites use isolated models/APIs and fictional fixtures, without live database access. Browser checks distinguish mocked workflows from read-only demo verification.
 
-## Deploy: Vercel + Render + MongoDB Atlas
+## Deploy: two Vercel projects + existing MongoDB Atlas
 
 Follow the exact environment tables and provider steps in [docs/deployment.md](docs/deployment.md).
 
 | Service | Root | Build | Start / output |
 | --- | --- | --- | --- |
-| Vercel frontend | `client` | `npm run build` | `dist` |
-| Render backend | `server` | `npm ci --include=dev && npm run build` | `npm start` |
+| Vercel frontend (Vite) | `client` | `npm run build` | `dist` |
+| Vercel backend (native Express) | `server` | Native framework default | Default export in `server/index.ts`; no start command |
 
-Vercel requires public `VITE_API_BASE_URL=https://YOUR_RENDER_HOST/api`. Render requires `NODE_ENV=production`, the exact HTTPS frontend `CLIENT_URL`, private `MONGODB_URI` and `JWT_SECRET`; keep `NOTIFICATION_SCHEDULER_ENABLED=false` for the demo. Render supplies `PORT`. No database credentials or signing keys belong in frontend variables.
+Both projects use branch `develop` and Node 24.x. The backend alone holds `NODE_ENV=production`, the exact HTTPS frontend `CLIENT_URL`, private `MONGODB_URI` selecting the already populated `warrior_fitness_demo`, and private `JWT_SECRET`. Set `DEMO_PUBLIC_LOGIN_ENABLED=true` and `NOTIFICATION_SCHEDULER_ENABLED=false`. No bootstrap credentials, seeding or new database are needed.
 
-`client/vercel.json` supports SPA deep links. `render.yaml` is an optional backend Blueprint; its private values are supplied in Render, not Git. The backend binds the platform port on `0.0.0.0`, uses exact-origin credentialed CORS and validates mutation origins. Production staff cookies are HttpOnly, Secure, SameSite=None and retain the eight-hour duration and session-version checks.
+After deploying the backend, set the frontend project's build-time `BACKEND_ORIGIN` to its actual HTTPS origin, without `/api`. `client/vercel.ts` forwards `/api/*` to that backend before the SPA fallback; browsers use same-origin `/api`. Leave `VITE_API_BASE_URL` unset (or `/api`); secrets never belong in frontend variables. The backend retains exact-origin checks and host-only HttpOnly/Secure cookies. The old `render.yaml` is unused by this deployment.
+
+The Vercel entry point shares database/index initialization across concurrent requests and reuses warm connection pools. It never starts the background scheduler or local listener. Both local `npm run dev` commands above remain unchanged. Provider proxy/cookie smoke checks are required after deployment; see the guide for the exact order and limitations.
 
 ## Release scope
 
