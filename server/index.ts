@@ -1,3 +1,4 @@
+/// <reference path="./src/types/express.d.ts" />
 import express from "express";
 import { app } from "./src/app.js";
 import { initializeApplication } from "./src/config/initialize.js";
